@@ -365,7 +365,7 @@ export default function GSIReport() {
         <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 18 }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
           <button style={mainBtnStyle} onClick={generateWord}>Generate Word Report</button>
-          <button style={mainBtnStyle} onClick={generatePDF}>Generate PDF Report</button>
+          <button style={mainBtnStyle} onClick={generatePDF}>Generate PDF (For Pictures)</button>
         </div>
       </div>
     </div>
