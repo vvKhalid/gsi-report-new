@@ -1,180 +1,212 @@
 "use client";
-
 import { useState } from "react";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun } from "docx";
-const XLSX = require("xlsx");
-
-
+import { jsPDF } from "jspdf";
 
 export default function GSIReport() {
   const [entries, setEntries] = useState([
-    { badge: "", classification:"", date: "", location: "", findings: "", status: "", images: [] },
-    
+    { badge: "", classification: "", date: "", location: "", findings: "", status: "", images: [] }
   ]);
- const addEntry = () => {
-  const firstBadge = entries[0]?.badge || "";
-  setEntries([
-    ...entries,
-    {
-      badge: firstBadge,  // Auto-fill from first entry
-      date: "",
-      location: "",
-      findings: "",
-      status: "",
-      classification: "",
-      images: []
-    }
-  ]);
-};
 
-const exportToExcel = () => {
-  const wsData = [
-    ["Badge Number", "Date/Time", "Location", "Findings/Observations", "Status", "Classification"],
+  // لإضافة ملاحظة جديدة
+  const addEntry = () => {
+    const firstBadge = entries[0]?.badge || "";
+    setEntries([
+      ...entries,
+      {
+        badge: firstBadge,
+        date: "",
+        location: "",
+        findings: "",
+        status: "",
+        classification: "",
+        images: []
+      }
+    ]);
+  };
 
-    ...entries.map(entry => [
-      entry.badge,
-      entry.date,
-      entry.location,
-      entry.findings,
-      entry.status,
-      entry.classification,
-    ])
-  ];
-
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Set custom column widths (order matches above)
-  ws['!cols'] = [
-    { wch: 18 }, // Badge Number
-    { wch: 16 }, // Date/Time
-    { wch: 22 }, // Location
-    { wch: 60 }, // Findings/Observations
-    { wch: 18 }, // Status
-    { wch: 35 }  // Classification
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Observations");
-  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(data, "GSI_Observations.xlsx");
-};
-
+  // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
     const newEntries = [...entries];
     newEntries[index][field] = value;
     setEntries(newEntries);
   };
 
-const updateImages = (index, files) => {
-  const newEntries = [...entries];
-  const existingImages = newEntries[index].images || [];
-  const selectedImages = Array.from(files);
-  const images = [...existingImages, ...selectedImages].slice(0, 2); // never more than 2
-  newEntries[index].images = images;
-  setEntries(newEntries);
-};
+  // تحديث الصور
+  const updateImages = (index, files) => {
+    const newEntries = [...entries];
+    const selectedImages = Array.from(files);
+    const existingImages = newEntries[index].images || [];
+    const images = [...existingImages, ...selectedImages].slice(0, 2);
+    newEntries[index].images = images;
+    setEntries(newEntries);
+  };
 
+  // حذف صورة
   const removeImage = (entryIndex, imageIndex) => {
     const newEntries = [...entries];
     newEntries[entryIndex].images.splice(imageIndex, 1);
     setEntries(newEntries);
   };
 
+  // توليد ملف Word
   const generateWord = async () => {
-  let photoCounter = 1;
-
-  const doc = new Document({
-    sections: [
-      {
-        children: [
-          new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
-          new Paragraph(" "),
-          new Table({
-           rows: [
-  new TableRow({
-    children: [
-      new TableCell({ shading: { fill: "4F81BD" }, children: [
-        new Paragraph({
-          children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })],
-          alignment: "center"
-        })
-      ] }),
-      new TableCell({ shading: { fill: "4F81BD" }, children: [
-        new Paragraph({
-          children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })],
-          alignment: "center"
-        })
-      ] }),
-      new TableCell({ shading: { fill: "4F81BD" }, children: [
-        new Paragraph({
-          children: [new TextRun({ text: "Inspected Area", color: "FFFFFF", bold: true })],
-          alignment: "center"
-        })
-      ] }),
-      new TableCell({ shading: { fill: "4F81BD" }, children: [
-        new Paragraph({
-          children: [new TextRun({ text: "Findings/Observations", color: "FFFFFF", bold: true })],
-          alignment: "center"
-        })
-      ] }),
-      new TableCell({ shading: { fill: "4F81BD" }, children: [
-        new Paragraph({
-          children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })],
-          alignment: "center"
-        })
-      ] }),
-      new TableCell({ shading: { fill: "4F81BD" }, children: [
-        new Paragraph({
-          children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })],
-          alignment: "center"
-        })
-      ] }),
-    ],
-  }),
-              ...entries.map((entry, index) => {
-                let photoText = "";
-                if (entry.images && entry.images.length > 0) {
-                  const start = photoCounter;
-                  const end = photoCounter + entry.images.length - 1;
-                  if (entry.images.length === 1) {
-                    photoText = `Photo#${start}`;
-                  } else {
-                    photoText = `Photo#${start},${end}`;
-                  }
-                  photoCounter += entry.images.length;
-                } else {
-                  photoText = "";
-                }
-
-                return new TableRow({
+    let photoCounter = 1;
+    const doc = new Document({
+      sections: [
+        {
+          children: [
+            new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
+            new Paragraph(" "),
+            new Table({
+              rows: [
+                new TableRow({
                   children: [
-                    new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),new TableCell({ children: [new Paragraph({ text: entry.location, alignment: "center" })] }),new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
-
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Inspected Area", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Findings/Observations", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                   ],
-                });
-              }),
-            ],
-          }),
-          new Paragraph(" "),
-          new Paragraph("Kindly see the inspection photos attached for your easy reference."),
-          new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
-          new Paragraph("Thank you for your usual cooperation."),
-          new Paragraph("Best Regards."),
-        ],
-      },
-    ],
-  });
+                }),
+                ...entries.map((entry, index) => {
+                  let photoText = "";
+                  if (entry.images && entry.images.length > 0) {
+                    const start = photoCounter;
+                    const end = photoCounter + entry.images.length - 1;
+                    if (entry.images.length === 1) {
+                      photoText = `Photo#${start}`;
+                    } else {
+                      photoText = `Photo#${start},${end}`;
+                    }
+                    photoCounter += entry.images.length;
+                  } else {
+                    photoText = "";
+                  }
+                  return new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.location, alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
+                    ],
+                  });
+                }),
+              ],
+            }),
+            new Paragraph(" "),
+            new Paragraph("Kindly see the inspection photos attached for your easy reference."),
+            new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
+            new Paragraph("Thank you for your usual cooperation."),
+            new Paragraph("Best Regards."),
+          ],
+        },
+      ],
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, "GSI_Report.docx");
+  };
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, "GSI_Report.docx");
+  // توليد PDF (نفس لاي أوت البوربوينت)
+ const generatePDF = async () => {
+  const iaLogo = "https://i.imgur.com/yvn568E.png";
+  const mnghaLogo = "https://i.imgur.com/r6ipmnF.png";
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+  // تحميل الشعارات
+  const loadImgToBase64 = (url) =>
+    new Promise((resolve) => {
+      const img = new window.Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.src = url;
+    });
+  const iaLogoBase64 = await loadImgToBase64(iaLogo);
+  const mnghaLogoBase64 = await loadImgToBase64(mnghaLogo);
+
+  // صفحة الغلاف
+  doc.addImage(iaLogoBase64, "PNG", 18, 10, 38, 38);
+  doc.addImage(mnghaLogoBase64, "PNG", 242, 10, 38, 38);
+
+  // نص الغلاف
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(13);
+  doc.text("Ministry of National Guard- Health Affairs\nKing Abdulaziz Medical City\nInternal Audit Division\nGeneral Services Inspection", 65, 22);
+
+  doc.setTextColor(183, 28, 28);
+  doc.setFontSize(40);
+  doc.setFont(undefined, "bold");
+  doc.text("Inspection Pics", 148, 90, { align: "center" });
+
+  doc.setTextColor(30, 53, 93);
+  doc.setFontSize(26);
+  doc.setFont(undefined, "normal");
+  doc.text(entries[0]?.date || "(date)", 148, 110, { align: "center" });
+  doc.text(entries[0]?.location || "(Location)", 148, 124, { align: "center" });
+
+  // باقي الصفحات: كل observation بصفحة
+  let photoNumber = 1;
+  for (const entry of entries) {
+    if (!entry.images || entry.images.length === 0) continue;
+
+    doc.addPage("a4", "landscape");
+
+    // صور obs
+    let imgs = [];
+    for (let i = 0; i < entry.images.length; i++) {
+      const imgFile = entry.images[i];
+      // حول الصورة إلى base64
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(imgFile);
+      });
+      imgs.push(base64);
+    }
+
+    // حدد الإحداثيات حسب كم صورة
+    if (imgs.length === 2) {
+      // صورتين - جنب بعض
+      doc.addImage(imgs[0], "PNG", 35, 40, 100, 75);
+      doc.addImage(imgs[1], "PNG", 155, 40, 100, 75);
+    } else if (imgs.length === 1) {
+      // صورة وحده - بالوسط
+      doc.addImage(imgs[0], "PNG", 92, 40, 120, 90);
+    }
+
+    // العنوان تحت الصور
+    doc.setTextColor(102, 102, 102);
+    doc.setFontSize(16);
+    let photoText = imgs.length === 2 
+      ? `Photos#${photoNumber},${photoNumber + 1} (${entry.location})`
+      : `Photo#${photoNumber} (${entry.location})`;
+    doc.text(photoText, 148, 130, { align: "center" });
+
+    // التاريخ أسفل الصفحة يمين
+    doc.setFontSize(12);
+    doc.setTextColor(120, 120, 120);
+    doc.text(entry.date || "", 260, 200, { align: "right" });
+
+    photoNumber += imgs.length;
+  }
+
+  doc.save("Inspection_Report.pdf");
 };
 
 
 
-
- 
+  // ========== الواجهة ==========
   return (
     <div style={{
       minHeight: "100vh",
@@ -195,7 +227,6 @@ const updateImages = (index, files) => {
           justifyContent: "space-between",
           marginBottom: 32
         }}>
-          {/* Left Logo */}
           <img src="/ia.png" alt="Logo AI" style={{
             width: 90,
             height: 90,
@@ -203,8 +234,6 @@ const updateImages = (index, files) => {
             boxShadow: "0 3px 10px #0002",
             background: "#fff"
           }} />
-
-          {/* Title */}
           <h1 style={{
             fontWeight: 700,
             fontSize: 36,
@@ -214,8 +243,6 @@ const updateImages = (index, files) => {
             flex: 1,
             textAlign: "center"
           }}>GSI Internal Audit Report Maker</h1>
-
-          {/* Right Logo */}
           <img src="/mngha.png" alt="Logo MNGHA" style={{
             width: 90,
             height: 90,
@@ -224,7 +251,6 @@ const updateImages = (index, files) => {
             background: "#fff"
           }} />
         </div>
-
         {/* Observations */}
         {entries.map((entry, idx) => (
           <div key={idx} style={{
@@ -268,7 +294,6 @@ const updateImages = (index, files) => {
               }}
             />
             <div>
-              {/* FILE INPUT + NOTE */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                 <input
                   type="file"
@@ -282,11 +307,8 @@ const updateImages = (index, files) => {
                   (Max 2 photos allowed per observation)
                 </span>
               </div>
-
-             {/* Badge Number For excel only */}
               <div style={{ margin: "16px 0 0 0", display: "flex", alignItems: "center", gap: 12 }}>
                 <label htmlFor={`badge-${idx}`} style={{ fontWeight: "bold", color: "#000", fontSize: 16 }}>Badge Number(For Excel Only):</label>
-
                 <input
                   id={`badge-${idx}`}
                   type="number"
@@ -301,11 +323,8 @@ const updateImages = (index, files) => {
                   }}
                 />
               </div>
-
-              {/* Classification of Finding */}
               <div style={{ margin: "16px 0 0 0", display: "flex", alignItems: "center", gap: 12 }}>
-                                <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#000", fontSize: 16 }}>Classification of Finding (For Excel Only):</label>
-
+                <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#000", fontSize: 16 }}>Classification of Finding (For Excel Only):</label>
                 <select
                   id={`classification-${idx}`}
                   value={entry.classification}
@@ -326,8 +345,6 @@ const updateImages = (index, files) => {
                   <option value="any other Operational deficiencies/ Obstacles">any other Operational deficiencies/ Obstacles</option>
                 </select>
               </div>
-
-              {/* SHOW IMAGES */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                 {entry.images && entry.images.map((img, i) => (
                   <div key={i} style={{
@@ -344,18 +361,18 @@ const updateImages = (index, files) => {
             </div>
           </div>
         ))}
-
-        {/* Buttons */}
+        {/* الأزرار */}
         <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 18 }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
           <button style={mainBtnStyle} onClick={generateWord}>Generate Word Report</button>
-          <button style={mainBtnStyle} onClick={exportToExcel}>Export to Excel</button>
+          <button style={mainBtnStyle} onClick={generatePDF}>Generate PDF Report</button>
         </div>
       </div>
     </div>
   );
 }
 
+// تنسيقات الحقول والأزرار
 const inputStyle = {
   border: "1.5px solid #60a5fa",
   borderRadius: 10,
@@ -365,9 +382,8 @@ const inputStyle = {
   background: "#f1f5f9",
   outline: "none",
   color: "#000",
-  fontWeight: "bold", 
+  fontWeight: "bold",
 };
-
 const mainBtnStyle = {
   background: "linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)",
   color: "#fff",
@@ -380,7 +396,6 @@ const mainBtnStyle = {
   cursor: "pointer",
   transition: "background 0.2s",
 };
-
 const removeBtnStyle = {
   position: "absolute",
   top: 0,
@@ -394,4 +409,3 @@ const removeBtnStyle = {
   fontWeight: "bold",
   cursor: "pointer"
 };
-
