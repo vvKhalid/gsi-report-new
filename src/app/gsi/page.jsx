@@ -261,13 +261,24 @@ export default function GSIReport() {
             padding: 24,
             borderLeft: "6px solid #2563eb"
           }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-              <input
-                type="date"
-                value={entry.date}
-                onChange={e => updateEntry(idx, "date", e.target.value)}
-                style={inputStyle}
-              />
+         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ fontWeight: "bold", marginBottom: 4 }}>Date</label>
+    <input
+      type="date"
+      value={entry.date}
+      onChange={e => updateEntry(idx, "date", e.target.value)}
+      style={inputStyle}
+    />
+  </div>
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ fontWeight: "bold", marginBottom: 4 }}>Location</label>
+    <input
+      placeholder="Location"
+      value={entry.location}
+      onChange={e => updateEntry(idx, "location", e.target.value)}
+      style={inputStyle}
+    />
               <input
                 placeholder="Location"
                 value={entry.location}
