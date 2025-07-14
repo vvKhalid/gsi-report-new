@@ -490,18 +490,19 @@ export default function GSIReport() {
 </div>
 
              <div style={{ marginBottom: 12 }}>
-  <label
-    htmlFor={`image-upload-${idx}`}
-    style={{
-      fontWeight: "bold",
-      fontSize: 16,
-      color: "#2563eb",
-      display: "block",
-      marginBottom: 4,
-    }}
-  >
-    Attach Photos
-  </label>
+ <label
+  htmlFor={`image-upload-${idx}`}
+  style={{
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#2563eb",
+    display: "block",
+    marginBottom: 4,
+  }}
+>
+  Attach Photos (2 Max)
+</label>
+
   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
     <input
       id={`image-upload-${idx}`}
@@ -513,7 +514,7 @@ export default function GSIReport() {
       style={{ marginBottom: 0 }}
     />
     <span style={{ fontSize: 13, color: "#666", fontWeight: "bold" }}>
-      (Max 2 photos)
+      
     </span>
   </div>
 </div>
@@ -573,7 +574,7 @@ export default function GSIReport() {
         {/* الأزرار */}
         <div style={{ display: "flex", gap: 13, justifyContent: "center", marginTop: 15, flexWrap: "wrap" }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
-          <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word (Photo Numbers)</button>
+          <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word </button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
         </div>
