@@ -278,7 +278,7 @@ export default function GSIReport() {
   if (!loggedIn) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", background: "#000000ff" }}>
-        <h2>Enter your Employee Badge</h2>
+        <h2>Enter your Badge Number</h2>
         <input
           type="text"
           placeholder="Badge Number"
@@ -539,7 +539,7 @@ export default function GSIReport() {
                   id={`classification-${idx}`}
                   value={entry.classification}
                   onChange={e => updateEntry(idx, "classification", e.target.value)}
-                  style={{ ...inputStyle, width: 220, fontWeight: "bold" }}
+                  style={{ ...inputStyle, width: 100, fontWeight: "bold" }}
                 >
                   <option value="">Classification</option>
                   <option value="Building Structures and Appearance">Building Structures and Appearance</option>
@@ -671,7 +671,7 @@ function StatisticsPopup({ onClose }) {
   value={currentName}
   onChange={e => setCurrentName(e.target.value)}
   style={{
-    padding: 8,
+    padding: 6,
     fontSize: 15,
     borderRadius: 8,
     border: "1.5px solid #2563eb",
@@ -692,14 +692,14 @@ function StatisticsPopup({ onClose }) {
           </button>
         </div>
         {/* قائمة الأماكن والإحصائيات */}
-        <div style={{ maxHeight: 330, overflow: "auto" }}>
+        <div style={{ maxHeight: 100, overflow: "auto" }}>
         {areas.map((area, areaIdx) => (
           area.name.trim() &&
           <div key={areaIdx} style={{
             background: "#f3f7ff",
-            borderRadius: 10,
+            borderRadius: 11,
             boxShadow: "0 2px 12px #60a5fa14",
-            padding: 14,
+            padding: 1,
             marginBottom: 18,
             borderLeft: "6px solid #2563eb"
           }}>
