@@ -518,28 +518,12 @@ export default function GSIReport() {
     </span>
   </div>
 </div>
-
-              <div style={{ margin: "10px 0 0 0", display: "flex", alignItems: "center", gap: 10 }}>
-                <label htmlFor={`badge-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 14 }}>Badge Number:</label>
-                <input
-                  id={`badge-${idx}`}
-                  type="number"
-                  min="1"
-                  placeholder="Badge number"
-                  value={entry.badge}
-                  onChange={e => updateEntry(idx, "badge", e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    width: 110,
-                    fontWeight: "bold"
-                  }}
-                />
-                <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 14, marginLeft: 2 }}>Classification:</label>
+ <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16, marginLeft: 2 }}>Classification:</label>
                 <select
                   id={`classification-${idx}`}
                   value={entry.classification}
                   onChange={e => updateEntry(idx, "classification", e.target.value)}
-                  style={{ ...inputStyle, width: 40, fontWeight: "bold" }}
+                  style={{ ...inputStyle, width: 150, fontWeight: "bold" }}
                 >
                   <option value="">Classification</option>
                   <option value="Building Structures and Appearance">Building Structures and Appearance</option>
@@ -554,6 +538,22 @@ export default function GSIReport() {
                   <option value="property condition">property condition</option>
                   <option value="any other Operational deficiencies/ Obstacles">any other Operational deficiencies/ Obstacles</option>
                 </select>
+              <div style={{ margin: "10px 0 0 0", display: "flex", alignItems: "center", gap: 10 }}>
+                <label htmlFor={`badge-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16 }}>Badge Number:</label>
+                <input
+                  id={`badge-${idx}`}
+                  type="number"
+                  min="1"
+                  placeholder="Badge number"
+                  value={entry.badge}
+                  onChange={e => updateEntry(idx, "badge", e.target.value)}
+                  style={{
+                    ...inputStyle,
+                    width: 110,
+                    fontWeight: "bold"
+                  }}
+                />
+               
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 10 }}>
                 {entry.images && entry.images.map((img, i) => (
