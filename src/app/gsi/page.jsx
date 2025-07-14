@@ -534,12 +534,12 @@ export default function GSIReport() {
                     fontWeight: "bold"
                   }}
                 />
-                <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 14, marginLeft: 8 }}>Classification:</label>
+                <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 14, marginLeft: 2 }}>Classification:</label>
                 <select
                   id={`classification-${idx}`}
                   value={entry.classification}
                   onChange={e => updateEntry(idx, "classification", e.target.value)}
-                  style={{ ...inputStyle, width: 100, fontWeight: "bold" }}
+                  style={{ ...inputStyle, width: 40, fontWeight: "bold" }}
                 >
                   <option value="">Classification</option>
                   <option value="Building Structures and Appearance">Building Structures and Appearance</option>
@@ -692,7 +692,7 @@ function StatisticsPopup({ onClose }) {
           </button>
         </div>
         {/* قائمة الأماكن والإحصائيات */}
-        <div style={{ maxHeight: 100, overflow: "auto" }}>
+        <div style={{ maxHeight: 1000, overflow: "auto" }}>
         {areas.map((area, areaIdx) => (
           area.name.trim() &&
           <div key={areaIdx} style={{
