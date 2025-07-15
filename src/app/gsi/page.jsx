@@ -66,6 +66,10 @@ function makeEmptyArea(name) {
       { key: "washrooms", label: "Washrooms", total: "", withFindings: "", withoutFindings: "" },
       { key: "corridors", label: "Corridors", total: "", withFindings: "", withoutFindings: "" },
       { key: "emergencyExits", label: "Emergency Exits", total: "", withFindings: "", withoutFindings: "" },
+      { key: "publicAreas", label: "Public Areas", total: "", withFindings: "", withoutFindings: "" },
+  { key: "outsideSurroundingArea", label: "Outside Surrounding Area", total: "", withFindings: "", withoutFindings: "" },
+  { key: "warehousesStorage", label: "Warehouses/Storage", total: "", withFindings: "", withoutFindings: "" },
+
     ],
   };
 }
@@ -84,6 +88,45 @@ const badgeUsers = {
   "100696": "Abdullah Al Enezi",
   "100729": "Ghozlan Alkharaan",
 };
+const LOCATIONS = {
+  "Hospitals": [
+    "Main Hospital",
+    "KASCH",
+    "WHH",
+    "Cardiac Center"
+  ],
+  "Primary Health Care": [
+    "AL Yarmouk PHC",
+    "HCSC PHC",
+    "NGCSC PHC",
+    "Dirab PHC",
+    "Prince Bader PHC",
+    "King Khalid PHC",
+    "AL Qadessiah PHC"
+  ],
+  "External Buildings/Areas": [
+    "Dental Building",
+    "Surgical Tower",
+    "Central Lab",
+    "ISD Building",
+    "Laundry Building",
+    "New Warehouses",
+    "Old Warehouses",
+    "Old Admin Building",
+    "New Admin Building",
+    "MC",
+    "MCX",
+"K1",
+"Transportation",
+"Printing Press"
+  ],
+  "Hemodialysis Centers": [
+    "Main hospital - Hemodialysis",
+    "North of Riyadh Hemodialysis Center",
+    "South of Riyadh Hemodialysis Center"
+  ],
+  
+};
 
 export default function GSIReport() {
   const [entries, setEntries] = useState([
@@ -94,23 +137,45 @@ export default function GSIReport() {
   const [userName, setUserName] = useState("");
   const [showStats, setShowStats] = useState(false);
 
+const WEB_APP_URL =  'https://docs.google.com/spreadsheets/d/156YVz_GMlZ-Sf0DGSnVDUpdDDv3AgNOT5kxOv0ihzaM/edit?gid=0#gid=0'; // استبدل هذا بالرابط الفعلي
+
+
+function sendToSheet(entry) {
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry)
+  })
+    .then(response => response.text())
+    .then(result => {
+      // ممكن تحط تنبيه نجاح هنا إذا تحب
+    })
+    .catch(error => {
+      // أو تنبيه خطأ هنا إذا تحب
+    });
+}
+
+
   // لإضافة ملاحظة جديدة
-  const addEntry = () => {
-    const firstBadge = entries[0]?.badge || "";
-    setEntries([
-      ...entries,
-      {
-        badge: firstBadge,
-        date: "",
-        location: "",
-        findings: "",
-        status: "",
-        classification: "",
-        risk: "",
-        images: []
-      }
-    ]);
-  };
+const addEntry = () => {
+  const last = entries[entries.length - 1] || {};
+  setEntries([
+    ...entries,
+    {
+      badge: last.badge || "",
+      date: last.date || "",
+      mainLocation: last.mainLocation || "",
+      sideLocation: last.sideLocation || "",
+      location: last.location || "",
+      exactLocation: last.exactLocation || "",
+      findings: "",
+      status: "",
+      classification: "",
+      risk: "",
+      images: []
+    }
+  ]);
+};
 
   // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
@@ -143,11 +208,10 @@ export default function GSIReport() {
         children: [
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Inspected Area", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         ],
       }),
       ...(await Promise.all(entries.map(async (entry, index) => {
@@ -179,11 +243,10 @@ export default function GSIReport() {
           children: [
             new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.location, alignment: "center" })] }),
+    new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
+    new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
             new TableCell({ children: imageParagraphs }),
-            new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.risk, alignment: "center" })] }),
           ],
         });
       })))
@@ -192,17 +255,24 @@ export default function GSIReport() {
       sections: [
         {
           children: [
-            new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
-            new Paragraph(" "),
-            new Table({
-              rows: tableRows,
-              width: { size: 100, type: "pct" }
-            }),
-            new Paragraph(" "),
-            new Paragraph("Kindly see the inspection photos attached for your easy reference."),
-            new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
-            new Paragraph("Thank you for your usual cooperation."),
-            new Paragraph("Best Regards."),
+            // أول سطرين: التاريخ والوكيشن (تأخذ من أول entry أو حسب اللي تبي)
+        new Paragraph({
+          children: [
+            new TextRun({ text: `Location: ${entries[0]?.mainLocation || ""}${entries[0]?.sideLocation ? " - " + entries[0]?.sideLocation : ""}` }),
+          ],
+          spacing: { after: 120 }
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: `Date: ${entries[0]?.date || ""}` }),
+          ],
+          spacing: { after: 240 }
+        }),
+        // الجدول مباشرة
+        new Table({
+          rows: tableRows,
+          width: { size: 100, type: "pct" }
+          }),
           ],
         },
       ],
@@ -226,7 +296,9 @@ export default function GSIReport() {
                   children: [
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Inspected Area", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
@@ -251,7 +323,9 @@ export default function GSIReport() {
                     children: [
                       new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.location, alignment: "center" })] }),
+                         new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
+    new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
+    new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
@@ -272,6 +346,8 @@ export default function GSIReport() {
     });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Report_PhotoNumbers.docx");
+    entries.forEach(entry => sendToSheet(entry));
+
   };
 
   // شاشة تسجيل الدخول
@@ -387,9 +463,75 @@ export default function GSIReport() {
   />
 </div>
 
-              <div style={{ marginBottom: 12 }}>
+{/* Location Dropdowns */}
+<div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+  <div>
+    <label
+      htmlFor={`main-location-${idx}`}
+      style={{
+        fontWeight: "bold",
+        fontSize: 16,
+        color: "#2563eb",
+        display: "block",
+        marginBottom: 6,
+      }}
+    >
+      Location
+    </label>
+    <select
+      id={`main-location-${idx}`}
+      value={entry.mainLocation || ""}
+      onChange={e => {
+        updateEntry(idx, "mainLocation", e.target.value);
+        updateEntry(idx, "sideLocation", "");
+        if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
+          updateEntry(idx, "location", e.target.value);
+        } else {
+          updateEntry(idx, "location", "");
+        }
+      }}
+      style={{ ...inputStyle, minWidth: 180 }}
+    >
+      <option value="">Select Location</option>
+      {Object.keys(LOCATIONS).map(main => (
+        <option key={main} value={main}>{main}</option>
+      ))}
+    </select>
+  </div>
+  {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
+    <div>
+      <label
+        htmlFor={`side-location-${idx}`}
+        style={{
+          fontWeight: "bold",
+          fontSize: 16,
+          color: "#2563eb",
+          display: "block",
+          marginBottom: 6,
+        }}
+      >
+        Assigned Inspection Location
+      </label>
+      <select
+        id={`side-location-${idx}`}
+        value={entry.sideLocation || ""}
+        onChange={e => {
+          updateEntry(idx, "sideLocation", e.target.value);
+          updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
+        }}
+        style={{ ...inputStyle, minWidth: 200 }}
+      >
+        <option value="">Select Assigned Inspection Location</option>
+        {LOCATIONS[entry.mainLocation].map(side => (
+          <option key={side} value={side}>{side}</option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
+<div style={{ marginBottom: 12 }}>
   <label
-    htmlFor={`location-${idx}`}
+    htmlFor={`exact-location-${idx}`}
     style={{
       fontWeight: "bold",
       fontSize: 16,
@@ -398,13 +540,13 @@ export default function GSIReport() {
       marginBottom: 6,
     }}
   >
-    Location
+    Exact Location
   </label>
   <input
-    id={`location-${idx}`}
-    placeholder="Enter location"
-    value={entry.location}
-    onChange={e => updateEntry(idx, "location", e.target.value)}
+    id={`exact-location-${idx}`}
+    placeholder="Enter the exact location (e.g., Room 101, Main Hall, etc.)"
+    value={entry.exactLocation || ""}
+    onChange={e => updateEntry(idx, "exactLocation", e.target.value)}
     style={inputStyle}
   />
 </div>
