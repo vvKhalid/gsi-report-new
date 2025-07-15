@@ -137,8 +137,7 @@ export default function GSIReport() {
   const [userName, setUserName] = useState("");
   const [showStats, setShowStats] = useState(false);
 
-const WEB_APP_URL =  'https://docs.google.com/spreadsheets/d/156YVz_GMlZ-Sf0DGSnVDUpdDDv3AgNOT5kxOv0ihzaM/edit?gid=0#gid=0'; // استبدل هذا بالرابط الفعلي
-
+const WEB_APP_URL =  'https://script.google.com/macros/s/AKfycby1Y2ucH8Q9ISFz2Lz7zhCgiuRb7Ex__a_hSiLOvZsPX3HnU96t_Ug0S56kzX9oOGzr/exec'; // استبدل هذا بالرابط الفعلي
 
 function sendToSheet(entry) {
   fetch(WEB_APP_URL, {
