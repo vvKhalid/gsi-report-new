@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun } from "docx";
+  import { useEffect } from "react"; // تأكد أنه مضاف فوق
+
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -149,7 +151,25 @@ export default function GSIReport() {
   const [userName, setUserName] = useState("");
   const [showStats, setShowStats] = useState(false);
 
-const WEB_APP_URL =  'https://script.google.com/macros/s/AKfycbwzdkoKF9qonfHNu-AUaXtPEUcbJfZnZY8Is3Y13yKxcJl5FV6wsNEMdgDuN78uzv3M/exec'; // استبدل هذا بالرابط الفعلي
+
+useEffect(() => {
+  const savedBadge = localStorage.getItem("gsi_badge");
+  const savedEntries = localStorage.getItem("gsi_entries");
+  if (savedBadge && savedEntries) {
+    setBadgeInput(savedBadge);
+    setEntries(JSON.parse(savedEntries));
+    // تقدر تسوي setLoggedIn(true); إذا تبي يدخل تلقائي
+  }
+}, []);
+
+  const saveForLater = () => {
+  localStorage.setItem("gsi_entries", JSON.stringify(entries));
+  localStorage.setItem("gsi_badge", badgeInput || entries[0]?.badge || "");
+alert("Saved. You can continue later by entering your badge number.");
+};
+
+
+const WEB_APP_URL =  'https://script.google.com/macros/s/AKfycbxQ0PeL1rGr82s8hJfZZ6-iTOdU8g8JY4dh8Mb_Srtg76U7WlLDnHeHXRjiKMbM3xtK/exec'; // استبدل هذا بالرابط الفعلي
 
 
 function sendToSheet(entry) {
@@ -377,17 +397,25 @@ const addEntry = () => {
         />
         <button
           style={mainBtnStyle}
-          onClick={() => {
-            if (badgeUsers[badgeInput.trim()]) {
-              setLoggedIn(true);
-              setUserName(badgeUsers[badgeInput.trim()]);
-              setEntries([
-                { ...entries[0], badge: badgeInput.trim() }
-              ]);
-            } else {
-              alert("Badge not recognized. Please contact admin.");
-            }
-          }}
+         onClick={() => {
+  if (badgeUsers[badgeInput.trim()]) {
+    setLoggedIn(true);
+    setUserName(badgeUsers[badgeInput.trim()]);
+    // جلب البيانات المحفوظة إذا فيه بيانات محفوظة بنفس البادج
+    const savedBadge = localStorage.getItem("gsi_badge");
+    const savedEntries = localStorage.getItem("gsi_entries");
+    if (savedBadge === badgeInput.trim() && savedEntries) {
+      setEntries(JSON.parse(savedEntries));
+    } else {
+      setEntries([
+        { ...entries[0], badge: badgeInput.trim() }
+      ]);
+    }
+  } else {
+    alert("Badge not recognized. Please contact admin.");
+  }
+}}
+
         >
           Enter
         </button>
@@ -732,6 +760,10 @@ const addEntry = () => {
           <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word </button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
+          <button style={mainBtnStyle} onClick={saveForLater}>
+  Save for later
+</button>
+
         </div>
         {/* Popup الإحصائيات */}
         {showStats && (
