@@ -1,9 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun } from "docx";
-  import { useEffect } from "react"; // تأكد أنه مضاف فوق
-
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -69,9 +67,8 @@ function makeEmptyArea(name) {
       { key: "corridors", label: "Corridors", total: "", withFindings: "", withoutFindings: "" },
       { key: "emergencyExits", label: "Emergency Exits", total: "", withFindings: "", withoutFindings: "" },
       { key: "publicAreas", label: "Public Areas", total: "", withFindings: "", withoutFindings: "" },
-  { key: "outsideSurroundingArea", label: "Outside Surrounding Area", total: "", withFindings: "", withoutFindings: "" },
-  { key: "warehousesStorage", label: "Warehouses/Storage", total: "", withFindings: "", withoutFindings: "" },
-
+      { key: "outsideSurroundingArea", label: "Outside Surrounding Area", total: "", withFindings: "", withoutFindings: "" },
+      { key: "warehousesStorage", label: "Warehouses/Storage", total: "", withFindings: "", withoutFindings: "" },
     ],
   };
 }
@@ -118,98 +115,91 @@ const LOCATIONS = {
     "New Admin Building",
     "MC",
     "MCX",
-"K1",
-"Transportation",
-"Printing Press"
+    "K1",
+    "Transportation",
+    "Printing Press"
   ],
   "Hemodialysis Centers": [
     "Main hospital - Hemodialysis",
     "North of Riyadh Hemodialysis Center",
     "South of Riyadh Hemodialysis Center"
   ],
-  
 };
 
 export default function GSIReport() {
   const [entries, setEntries] = useState([
-  { 
-    badge: "", 
-    classification: "", 
-    date: "", 
-    location: "", 
-    mainLocation: "",
-    sideLocation: "",
-    exactLocation: "",
-    findings: "", 
-    status: "", 
-    risk: "", 
-    images: [] 
-  }
-]);
+    {
+      badge: "",
+      classification: "",
+      date: "",
+      location: "",
+      mainLocation: "",
+      sideLocation: "",
+      exactLocation: "",
+      findings: "",
+      status: "",
+      risk: "",
+      images: []
+    }
+  ]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [badgeInput, setBadgeInput] = useState("");
   const [userName, setUserName] = useState("");
   const [showStats, setShowStats] = useState(false);
 
-
-useEffect(() => {
-  const savedBadge = localStorage.getItem("gsi_badge");
-  const savedEntries = localStorage.getItem("gsi_entries");
-  if (savedBadge && savedEntries) {
-    setBadgeInput(savedBadge);
-    setEntries(JSON.parse(savedEntries));
-    // تقدر تسوي setLoggedIn(true); إذا تبي يدخل تلقائي
-  }
-}, []);
+  useEffect(() => {
+    const savedBadge = localStorage.getItem("gsi_badge");
+    const savedEntries = localStorage.getItem("gsi_entries");
+    if (savedBadge && savedEntries) {
+      setBadgeInput(savedBadge);
+      setEntries(JSON.parse(savedEntries));
+      // تقدر تسوي setLoggedIn(true); إذا تبي يدخل تلقائي
+    }
+  }, []);
 
   const saveForLater = () => {
-  localStorage.setItem("gsi_entries", JSON.stringify(entries));
-  localStorage.setItem("gsi_badge", badgeInput || entries[0]?.badge || "");
-alert("Saved. You can continue later by entering your badge number.");
-};
+    localStorage.setItem("gsi_entries", JSON.stringify(entries));
+    localStorage.setItem("gsi_badge", badgeInput || entries[0]?.badge || "");
+    alert("Saved. You can continue later by entering your badge number.");
+  };
 
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec';
 
-const WEB_APP_URL =  'https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec'; // استبدل هذا بالرابط الفعلي
-
-
-function sendToSheet(entry) {
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry)
-  })
-  .then(response => response.text())
-  .then(result => {
-    console.log("Data sent successfully: ", result);
-  })
-  .catch(error => {
-    console.error("Error sending data: ", error);
-  });
-}
-
-
-
+  function sendToSheet(entry) {
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    })
+      .then(response => response.text())
+      .then(result => {
+        console.log("Data sent successfully: ", result);
+      })
+      .catch(error => {
+        console.error("Error sending data: ", error);
+      });
+  }
 
   // لإضافة ملاحظة جديدة
-const addEntry = () => {
-  const last = entries[entries.length - 1] || {};
-  setEntries([
-    ...entries,
-    {
-      badge: last.badge || "",
-      date: last.date || "",
-      mainLocation: last.mainLocation || "",
-      sideLocation: last.sideLocation || "",
-      location: last.location || "",
-      exactLocation: last.exactLocation || "",
-      findings: "",
-      status: "",
-      classification: "",
-      risk: "",
-      images: []
-    }
-  ]);
-};
+  const addEntry = () => {
+    const last = entries[entries.length - 1] || {};
+    setEntries([
+      ...entries,
+      {
+        badge: last.badge || "",
+        date: last.date || "",
+        mainLocation: last.mainLocation || "",
+        sideLocation: last.sideLocation || "",
+        location: last.location || "",
+        exactLocation: last.exactLocation || "",
+        findings: "",
+        status: "",
+        classification: "",
+        risk: "",
+        images: []
+      }
+    ]);
+  };
 
   // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
@@ -242,8 +232,8 @@ const addEntry = () => {
         children: [
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         ],
@@ -277,8 +267,8 @@ const addEntry = () => {
           children: [
             new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
-    new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-    new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
             new TableCell({ children: imageParagraphs }),
           ],
@@ -289,30 +279,33 @@ const addEntry = () => {
       sections: [
         {
           children: [
-            // أول سطرين: التاريخ والوكيشن (تأخذ من أول entry أو حسب اللي تبي)
-        new Paragraph({
-          children: [
-            new TextRun({ text: `Location: ${entries[0]?.mainLocation || ""}${entries[0]?.sideLocation ? " - " + entries[0]?.sideLocation : ""}` }),
-          ],
-          spacing: { after: 120 }
-        }),
-        new Paragraph({
-          children: [
-            new TextRun({ text: `Date: ${entries[0]?.date || ""}` }),
-          ],
-          spacing: { after: 240 }
-        }),
-        // الجدول مباشرة
-        new Table({
-          rows: tableRows,
-          width: { size: 100, type: "pct" }
-          }),
+            new Paragraph({
+              children: [
+                new TextRun({ text: `Location: ${entries[0]?.mainLocation || ""}${entries[0]?.sideLocation ? " - " + entries[0]?.sideLocation : ""}` }),
+              ],
+              spacing: { after: 120 }
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({ text: `Date: ${entries[0]?.date || ""}` }),
+              ],
+              spacing: { after: 240 }
+            }),
+            new Table({
+              rows: tableRows,
+              width: { size: 100, type: "pct" }
+            }),
           ],
         },
       ],
     });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Report_withPhotos.docx");
+
+    // حذف البيانات بعد إنشاء الملف
+    localStorage.removeItem("gsi_entries");
+    localStorage.removeItem("gsi_badge");
+    alert("Word file created. Saved data has been deleted.");
   };
 
   // ملف أرقام الصور فقط
@@ -330,9 +323,9 @@ const addEntry = () => {
                   children: [
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                     new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
@@ -357,9 +350,9 @@ const addEntry = () => {
                     children: [
                       new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
-                         new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
-    new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-    new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
+                      new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
                       new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
@@ -380,10 +373,11 @@ const addEntry = () => {
     });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Report_PhotoNumbers.docx");
-    entries.forEach(entry => sendToSheet(entry));
-localStorage.removeItem("gsiReport_" + badgeInput.trim());
-alert("Word file created. Saved data has been deleted.");
 
+    // حذف البيانات بعد إنشاء الملف
+    localStorage.removeItem("gsi_entries");
+    localStorage.removeItem("gsi_badge");
+    alert("Word file created. Saved data has been deleted.");
   };
 
   // شاشة تسجيل الدخول
@@ -400,25 +394,26 @@ alert("Word file created. Saved data has been deleted.");
         />
         <button
           style={mainBtnStyle}
-         onClick={() => {
-  if (badgeUsers[badgeInput.trim()]) {
-    setLoggedIn(true);
-    setUserName(badgeUsers[badgeInput.trim()]);
-    // جلب البيانات المحفوظة إذا فيه بيانات محفوظة بنفس البادج
-    const savedBadge = localStorage.getItem("gsi_badge");
-    const savedEntries = localStorage.getItem("gsi_entries");
-    if (savedBadge === badgeInput.trim() && savedEntries) {
-      setEntries(JSON.parse(savedEntries));
-    } else {
-      setEntries([
-        { ...entries[0], badge: badgeInput.trim() }
-      ]);
-    }
-  } else {
-    alert("Badge not recognized. Please contact admin.");
-  }
-}}
-
+          onClick={() => {
+            if (badgeUsers[badgeInput.trim()]) {
+              setLoggedIn(true);
+              setUserName(badgeUsers[badgeInput.trim()]);
+              // جلب البيانات المحفوظة إذا فيه بيانات محفوظة بنفس البادج
+              const savedBadge = localStorage.getItem("gsi_badge");
+              const savedEntries = localStorage.getItem("gsi_entries");
+              if (savedBadge === badgeInput.trim() && savedEntries) {
+                setEntries(JSON.parse(savedEntries));
+              } else {
+                setEntries([
+                  { ...entries[0], badge: badgeInput.trim() }
+                ]);
+              }
+            } else {
+              alert("Badge not recognized. Please contact admin.");
+              localStorage.removeItem("gsi_entries");
+              localStorage.removeItem("gsi_badge");
+            }
+          }}
         >
           Enter
         </button>
@@ -485,245 +480,245 @@ alert("Word file created. Saved data has been deleted.");
             borderLeft: "6px solid #2563eb"
           }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
-            <div style={{ marginBottom: 12 }}>
-  <label
-    htmlFor={`date-${idx}`}
-    style={{
-      fontWeight: "bold",
-      fontSize: 16,
-      color: "#2563eb",
-      display: "block",
-      marginBottom: 6,
-    }}
-  >
-    Date
-  </label>
-  <input
-    id={`date-${idx}`}
-    type="date"
-    value={entry.date}
-    onChange={e => updateEntry(idx, "date", e.target.value)}
-    style={inputStyle}
-  />
-</div>
-
-{/* Location Dropdowns */}
-<div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
-  <div>
-    <label
-      htmlFor={`main-location-${idx}`}
-      style={{
-        fontWeight: "bold",
-        fontSize: 16,
-        color: "#2563eb",
-        display: "block",
-        marginBottom: 6,
-      }}
-    >
-      Location
-    </label>
-    <select
-      id={`main-location-${idx}`}
-      value={entry.mainLocation || ""}
-      onChange={e => {
-        updateEntry(idx, "mainLocation", e.target.value);
-        updateEntry(idx, "sideLocation", "");
-        if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
-          updateEntry(idx, "location", e.target.value);
-        } else {
-          updateEntry(idx, "location", "");
-        }
-      }}
-      style={{ ...inputStyle, minWidth: 180 }}
-    >
-      <option value="">Select Location</option>
-      {Object.keys(LOCATIONS).map(main => (
-        <option key={main} value={main}>{main}</option>
-      ))}
-    </select>
-  </div>
-  {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
-    <div>
-      <label
-        htmlFor={`side-location-${idx}`}
-        style={{
-          fontWeight: "bold",
-          fontSize: 16,
-          color: "#2563eb",
-          display: "block",
-          marginBottom: 6,
-        }}
-      >
-        Assigned Inspection Location
-      </label>
-      <select
-        id={`side-location-${idx}`}
-        value={entry.sideLocation || ""}
-        onChange={e => {
-          updateEntry(idx, "sideLocation", e.target.value);
-          updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
-        }}
-        style={{ ...inputStyle, minWidth: 200 }}
-      >
-        <option value="">Select Assigned Inspection Location</option>
-        {LOCATIONS[entry.mainLocation].map(side => (
-          <option key={side} value={side}>{side}</option>
-        ))}
-      </select>
-    </div>
-  )}
-</div>
-<div style={{ marginBottom: 12 }}>
-  <label
-    htmlFor={`exact-location-${idx}`}
-    style={{
-      fontWeight: "bold",
-      fontSize: 16,
-      color: "#2563eb",
-      display: "block",
-      marginBottom: 6,
-    }}
-  >
-    Exact Location
-  </label>
-  <input
-    id={`exact-location-${idx}`}
-    placeholder="Enter the exact location (e.g., Room 101, Main Hall, etc.)"
-    value={entry.exactLocation || ""}
-    onChange={e => updateEntry(idx, "exactLocation", e.target.value)}
-    style={inputStyle}
-  />
-</div>
-
-           <div style={{ marginBottom: 12 }}>
-  <label
-    htmlFor={`status-${idx}`}
-    style={{
-      fontWeight: "bold",
-      fontSize: 16,
-      color: "#2563eb",
-      display: "block",
-      marginBottom: 6,
-    }}
-  >
-    Status
-  </label>
-  <select
-    id={`status-${idx}`}
-    value={entry.status}
-    onChange={e => updateEntry(idx, "status", e.target.value)}
-    style={{ ...inputStyle, minWidth: 140 }}
-  >
-    <option value="" disabled>Select status</option>
-    <option value="Rectified">Rectified</option>
-    <option value="Previously reported / Not Rectified">Previously reported / Not Rectified</option>
-    <option value="New">New</option>
-  </select>
-</div>
-
-             <div style={{ marginBottom: 12 }}>
-  <label
-    htmlFor={`risk-${idx}`}
-    style={{
-      fontWeight: "bold",
-      fontSize: 16,
-      color: "#2563eb", // لون أحمر واضح
-      display: "block",
-      marginBottom: 6,
-    }}
-  >
-    Risk / Priority
-  </label>
-  <select
-    id={`risk-${idx}`}
-    value={entry.risk}
-    onChange={e => updateEntry(idx, "risk", e.target.value)}
-    style={{ ...inputStyle, minWidth: 140 }}
-  >
-    <option value="">Risk/Priority</option>
-    <option value="High">High</option>
-    <option value="Medium">Medium</option>
-    <option value="Low">Low</option>
-  </select>
-</div>
-
-          <div style={{ marginBottom: 12 }}>
-  <label
-    htmlFor={`findings-${idx}`}
-    style={{
-      fontWeight: "bold",
-      fontSize: 16,
-      color: "#2563eb",
-      display: "block",
-      marginBottom: 5,
-    }}
-  >
-    Description of Observation
-  </label>
-  <textarea
-    id={`findings-${idx}`}
-    placeholder="Enter The Description of The Observation"
-    value={entry.findings}
-    onChange={e => updateEntry(idx, "findings", e.target.value)}
-    style={{
-      ...inputStyle,
-      width: "100%",
-      minHeight: 44,
-      resize: "vertical",
-      marginBottom: 12,
-    }}
-  />
-</div>
-
-             <div style={{ marginBottom: 12 }}>
- <label
-  htmlFor={`image-upload-${idx}`}
-  style={{
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#2563eb",
-    display: "block",
-    marginBottom: 4,
-  }}
->
-  Attach Photos (2 Max)
-</label>
-
-  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-    <input
-      id={`image-upload-${idx}`}
-      type="file"
-      multiple
-      accept="image/*"
-      onChange={e => updateImages(idx, e.target.files)}
-      disabled={entry.images && entry.images.length >= 2}
-      style={{ marginBottom: 0 }}
-    />
-    <span style={{ fontSize: 13, color: "#666", fontWeight: "bold" }}>
-      
-    </span>
-  </div>
-</div>
- <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16, marginLeft: 2 }}>Classification:</label>
-                <select
-                  id={`classification-${idx}`}
-                  value={entry.classification}
-                  onChange={e => updateEntry(idx, "classification", e.target.value)}
-                  style={{ ...inputStyle, width: 150, fontWeight: "bold" }}
+              {/* Date */}
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  htmlFor={`date-${idx}`}
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#2563eb",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
                 >
-                  <option value="">Classification</option>
-                  <option value="Building Structures and Appearance">Building Structures and Appearance</option>
-                  <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">Facility Maintenance (e.g., Electrical plumbing drainage issue)</option>
-                  <option value="Safety & Security measures in internal and external areas">Safety & Security measures in internal and external areas</option>
-                  <option value="Support Services (e.g., Environmental /Housekeeping)">Support Services (e.g., Environmental /Housekeeping)</option>
-                  <option value="Availability, Attitude and attentiveness of service providers">Availability, Attitude and attentiveness of service providers</option>
-                  <option value="Concerns raised by staff at any inspected location">Concerns raised by staff at any inspected location</option>
-                  <option value="Unsolved patients Issues during the time of inspection">Unsolved patients Issues during the time of inspection</option>
-                  <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">Policy Compliance (general policies such as non-smoking and dress code-wearing badges)</option>
-                  <option value="Space utilization">Space utilization</option>
-                  <option value="property condition">property condition</option>
-                  <option value="any other Operational deficiencies/ Obstacles">any other Operational deficiencies/ Obstacles</option>
+                  Date
+                </label>
+                <input
+                  id={`date-${idx}`}
+                  type="date"
+                  value={entry.date}
+                  onChange={e => updateEntry(idx, "date", e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+              {/* Location Dropdowns */}
+              <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+                <div>
+                  <label
+                    htmlFor={`main-location-${idx}`}
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: 16,
+                      color: "#2563eb",
+                      display: "block",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Location
+                  </label>
+                  <select
+                    id={`main-location-${idx}`}
+                    value={entry.mainLocation || ""}
+                    onChange={e => {
+                      updateEntry(idx, "mainLocation", e.target.value);
+                      updateEntry(idx, "sideLocation", "");
+                      if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
+                        updateEntry(idx, "location", e.target.value);
+                      } else {
+                        updateEntry(idx, "location", "");
+                      }
+                    }}
+                    style={{ ...inputStyle, minWidth: 180 }}
+                  >
+                    <option value="">Select Location</option>
+                    {Object.keys(LOCATIONS).map(main => (
+                      <option key={main} value={main}>{main}</option>
+                    ))}
+                  </select>
+                </div>
+                {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
+                  <div>
+                    <label
+                      htmlFor={`side-location-${idx}`}
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        color: "#2563eb",
+                        display: "block",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Assigned Inspection Location
+                    </label>
+                    <select
+                      id={`side-location-${idx}`}
+                      value={entry.sideLocation || ""}
+                      onChange={e => {
+                        updateEntry(idx, "sideLocation", e.target.value);
+                        updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
+                      }}
+                      style={{ ...inputStyle, minWidth: 200 }}
+                    >
+                      <option value="">Select Assigned Inspection Location</option>
+                      {LOCATIONS[entry.mainLocation].map(side => (
+                        <option key={side} value={side}>{side}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              {/* Exact Location */}
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  htmlFor={`exact-location-${idx}`}
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#2563eb",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
+                  Exact Location
+                </label>
+                <input
+                  id={`exact-location-${idx}`}
+                  placeholder="Enter the exact location (e.g., Room 101, Main Hall, etc.)"
+                  value={entry.exactLocation || ""}
+                  onChange={e => updateEntry(idx, "exactLocation", e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+              {/* Status */}
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  htmlFor={`status-${idx}`}
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#2563eb",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
+                  Status
+                </label>
+                <select
+                  id={`status-${idx}`}
+                  value={entry.status}
+                  onChange={e => updateEntry(idx, "status", e.target.value)}
+                  style={{ ...inputStyle, minWidth: 140 }}
+                >
+                  <option value="" disabled>Select status</option>
+                  <option value="Rectified">Rectified</option>
+                  <option value="Previously reported / Not Rectified">Previously reported / Not Rectified</option>
+                  <option value="New">New</option>
                 </select>
+              </div>
+              {/* Risk / Priority */}
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  htmlFor={`risk-${idx}`}
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#2563eb",
+                    display: "block",
+                    marginBottom: 6,
+                  }}
+                >
+                  Risk / Priority
+                </label>
+                <select
+                  id={`risk-${idx}`}
+                  value={entry.risk}
+                  onChange={e => updateEntry(idx, "risk", e.target.value)}
+                  style={{ ...inputStyle, minWidth: 140 }}
+                >
+                  <option value="">Risk/Priority</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              {/* Description of Observation */}
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  htmlFor={`findings-${idx}`}
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#2563eb",
+                    display: "block",
+                    marginBottom: 5,
+                  }}
+                >
+                  Description of Observation
+                </label>
+                <textarea
+                  id={`findings-${idx}`}
+                  placeholder="Enter The Description of The Observation"
+                  value={entry.findings}
+                  onChange={e => updateEntry(idx, "findings", e.target.value)}
+                  style={{
+                    ...inputStyle,
+                    width: "100%",
+                    minHeight: 44,
+                    resize: "vertical",
+                    marginBottom: 12,
+                  }}
+                />
+              </div>
+              {/* Attach Photos */}
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  htmlFor={`image-upload-${idx}`}
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    color: "#2563eb",
+                    display: "block",
+                    marginBottom: 4,
+                  }}
+                >
+                  Attach Photos (2 Max)
+                </label>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                  <input
+                    id={`image-upload-${idx}`}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={e => updateImages(idx, e.target.files)}
+                    disabled={entry.images && entry.images.length >= 2}
+                    style={{ marginBottom: 0 }}
+                  />
+                </div>
+              </div>
+              {/* Classification */}
+              <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16, marginLeft: 2 }}>Classification:</label>
+              <select
+                id={`classification-${idx}`}
+                value={entry.classification}
+                onChange={e => updateEntry(idx, "classification", e.target.value)}
+                style={{ ...inputStyle, width: 150, fontWeight: "bold" }}
+              >
+                <option value="">Classification</option>
+                <option value="Building Structures and Appearance">Building Structures and Appearance</option>
+                <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">Facility Maintenance (e.g., Electrical plumbing drainage issue)</option>
+                <option value="Safety & Security measures in internal and external areas">Safety & Security measures in internal and external areas</option>
+                <option value="Support Services (e.g., Environmental /Housekeeping)">Support Services (e.g., Environmental /Housekeeping)</option>
+                <option value="Availability, Attitude and attentiveness of service providers">Availability, Attitude and attentiveness of service providers</option>
+                <option value="Concerns raised by staff at any inspected location">Concerns raised by staff at any inspected location</option>
+                <option value="Unsolved patients Issues during the time of inspection">Unsolved patients Issues during the time of inspection</option>
+                <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">Policy Compliance (general policies such as non-smoking and dress code-wearing badges)</option>
+                <option value="Space utilization">Space utilization</option>
+                <option value="property condition">property condition</option>
+                <option value="any other Operational deficiencies/ Obstacles">any other Operational deficiencies/ Obstacles</option>
+              </select>
+              {/* Badge Number */}
               <div style={{ margin: "10px 0 0 0", display: "flex", alignItems: "center", gap: 10 }}>
                 <label htmlFor={`badge-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16 }}>Badge Number:</label>
                 <input
@@ -739,8 +734,8 @@ alert("Word file created. Saved data has been deleted.");
                     fontWeight: "bold"
                   }}
                 />
-               
               </div>
+              {/* Images Preview */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 10 }}>
                 {entry.images && entry.images.map((img, i) => (
                   <div key={i} style={{
@@ -763,10 +758,7 @@ alert("Word file created. Saved data has been deleted.");
           <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word </button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
-          <button style={mainBtnStyle} onClick={saveForLater}>
-  Save for later
-</button>
-
+          <button style={mainBtnStyle} onClick={saveForLater}>Save for later</button>
         </div>
         {/* Popup الإحصائيات */}
         {showStats && (
@@ -855,22 +847,22 @@ function StatisticsPopup({ onClose }) {
         <h2 style={{ color: "#2563eb", textAlign: "center", marginBottom: 8 }}>Areas Statistics</h2>
         {/* إضافة منطقة جديدة */}
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
-        <input
-  type="text"
-  placeholder="Enter area/location name"
-  value={currentName}
-  onChange={e => setCurrentName(e.target.value)}
-  style={{
-    padding: 6,
-    fontSize: 15,
-    borderRadius: 8,
-    border: "1.5px solid #2563eb",
-    minWidth: 170,
-    background: "#fff",    // خلي الخلفية بيضاء أو اللي تفضله
-    color: "#2563eb",      // لون النص نفس لون البوردر (أزرق)
-    fontWeight: "bold",
-    outline: "none"
-  }}
+          <input
+            type="text"
+            placeholder="Enter area/location name"
+            value={currentName}
+            onChange={e => setCurrentName(e.target.value)}
+            style={{
+              padding: 6,
+              fontSize: 15,
+              borderRadius: 8,
+              border: "1.5px solid #2563eb",
+              minWidth: 170,
+              background: "#fff",
+              color: "#2563eb",
+              fontWeight: "bold",
+              outline: "none"
+            }}
           />
           <button
             onClick={addArea}
@@ -883,46 +875,45 @@ function StatisticsPopup({ onClose }) {
         </div>
         {/* قائمة الأماكن والإحصائيات */}
         <div style={{ maxHeight: 1000, overflow: "auto" }}>
-        {areas.map((area, areaIdx) => (
-          area.name.trim() &&
-          <div key={areaIdx} style={{
-            background: "#f3f7ff",
-            borderRadius: 11,
-            boxShadow: "0 2px 12px #60a5fa14",
-            padding: 1,
-            marginBottom: 18,
-            borderLeft: "6px solid #2563eb"
-          }}>
-            <h3 style={{ margin: 0, color: "#2563eb", fontSize: 17 }}>{area.name}</h3>
-            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 9, marginBottom: 2 }}>
-              <thead>
-                <tr style={{ background: "#dbeafe", color: "#1e293b" }}>
-                  <th style={cellStyle}>Type</th>
-                  <th style={cellStyle}>Total</th>
-                  <th style={cellStyle}>With Findings</th>
-                  <th style={cellStyle}>No Findings</th>
-                </tr>
-              </thead>
-              <tbody>
-                {area.stats.map(stat => (
-                  <tr key={stat.key}>
-                  <td style={{ ...cellStyle, color: "#2563eb", fontWeight: "bold" }}>{stat.label}</td>
-<td style={cellStyle}>
-
-                      <input type="number" min={0} value={stat.total} onChange={e => updateStat(areaIdx, stat.key, "total", e.target.value)} style={inputStyle} />
-                    </td>
-                    <td style={cellStyle}>
-                      <input type="number" min={0} value={stat.withFindings} onChange={e => updateStat(areaIdx, stat.key, "withFindings", e.target.value)} style={inputStyle} />
-                    </td>
-                    <td style={cellStyle}>
-                      <input type="number" min={0} value={stat.withoutFindings} onChange={e => updateStat(areaIdx, stat.key, "withoutFindings", e.target.value)} style={inputStyle} />
-                    </td>
+          {areas.map((area, areaIdx) => (
+            area.name.trim() &&
+            <div key={areaIdx} style={{
+              background: "#f3f7ff",
+              borderRadius: 11,
+              boxShadow: "0 2px 12px #60a5fa14",
+              padding: 1,
+              marginBottom: 18,
+              borderLeft: "6px solid #2563eb"
+            }}>
+              <h3 style={{ margin: 0, color: "#2563eb", fontSize: 17 }}>{area.name}</h3>
+              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 9, marginBottom: 2 }}>
+                <thead>
+                  <tr style={{ background: "#dbeafe", color: "#1e293b" }}>
+                    <th style={cellStyle}>Type</th>
+                    <th style={cellStyle}>Total</th>
+                    <th style={cellStyle}>With Findings</th>
+                    <th style={cellStyle}>No Findings</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
+                </thead>
+                <tbody>
+                  {area.stats.map(stat => (
+                    <tr key={stat.key}>
+                      <td style={{ ...cellStyle, color: "#2563eb", fontWeight: "bold" }}>{stat.label}</td>
+                      <td style={cellStyle}>
+                        <input type="number" min={0} value={stat.total} onChange={e => updateStat(areaIdx, stat.key, "total", e.target.value)} style={inputStyle} />
+                      </td>
+                      <td style={cellStyle}>
+                        <input type="number" min={0} value={stat.withFindings} onChange={e => updateStat(areaIdx, stat.key, "withFindings", e.target.value)} style={inputStyle} />
+                      </td>
+                      <td style={cellStyle}>
+                        <input type="number" min={0} value={stat.withoutFindings} onChange={e => updateStat(areaIdx, stat.key, "withoutFindings", e.target.value)} style={inputStyle} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 10, display: "flex", gap: 12, justifyContent: "center" }}>
           <button onClick={generateStatsWord} style={mainBtnStyle}>
