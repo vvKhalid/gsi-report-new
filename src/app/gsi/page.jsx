@@ -295,97 +295,81 @@ export default function GSIReport() {
   };
 
   // ملف أرقام الصور فقط
-  const generateWordPhotoNumbers = async () => {
-    let photoCounter = 1;
-    const doc = new Document({
-      sections: [
-        {
-          children: [
-            new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
-            new Paragraph(" "),
-            new Table({
-              rows: [
-                new TableRow({
+ const generateWordPhotoNumbers = async () => {
+  let photoCounter = 1;
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
+          new Paragraph(" "),
+          new Table({
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                ],
+              }),
+              ...entries.map((entry, index) => {
+                let photoText = "";
+                if (entry.images && entry.images.length > 0) {
+                  const start = photoCounter;
+                  const end = photoCounter + entry.images.length - 1;
+                  photoText = entry.images.length === 1 ? `Photo#${start}` : `Photos#${start},${end}`;
+                  photoCounter += entry.images.length;
+                }
+                return new TableRow({
                   children: [
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                    new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: entry.risk, alignment: "center" })] }),
                   ],
-                }),
-                ...entries.map((entry, index) => {
-                  let photoText = "";
-                  if (entry.images && entry.images.length > 0) {
-                    const start = photoCounter;
-                    const end = photoCounter + entry.images.length - 1;
-                    if (entry.images.length === 1) {
-                      photoText = `Photo#${start}`;
-                    } else {
-                      photoText = `Photos#${start},${end}`;
-                    }
-                    photoCounter += entry.images.length;
-                  } else {
-                    photoText = "";
-                  }
-                  return new TableRow({
-                    children: [
-                      new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
-                      new TableCell({ children: [new Paragraph({ text: entry.risk, alignment: "center" })] }),
-                    ],
-                  });
-                }),
-              ],
-            }),
-            new Paragraph(" "),
-            new Paragraph("Kindly see the inspection photos attached for your easy reference."),
-            new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
-            new Paragraph("Thank you for your usual cooperation."),
-            new Paragraph("Best Regards."),
-          ],
-        },
-      ],
-    });
-        const formData = {
-    badge: entry.badge,
-    date: entry.date,
-    mainLocation: entry.mainLocation,
-    sideLocation: entry.sideLocation,
-    exactLocation: entry.exactLocation,
-    findings: entry.findings,
-    status: entry.status,
-    classification: entry.classification,
-    risk: entry.risk,
-  };
+                });
+              }),
+            ],
+          }),
+          new Paragraph(" "),
+          new Paragraph("Kindly see the inspection photos attached for your easy reference."),
+          new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
+          new Paragraph("Thank you for your usual cooperation."),
+          new Paragraph("Best Regards."),
+        ],
+      },
+    ],
+  });
 
-  // إرسال البيانات لـ Google Sheet
+  const formData = entries[0];
+
   fetch('https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData)
   })
-  .then(res => res.json())
-  .then(response => console.log(response))
-  .catch(err => console.error('Error:', err));
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "GSI_Report_PhotoNumbers.docx");
-  
-    // حذف البيانات بعد إنشاء الملف
-    localStorage.removeItem("gsi_entries");
-    localStorage.removeItem("gsi_badge");
-    alert("Word file created. Saved data has been deleted.");
-  };
+    .then(res => res.json())
+    .then(response => console.log(response))
+    .catch(err => console.error('Error:', err));
+
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, "GSI_Report_PhotoNumbers.docx");
+
+  localStorage.removeItem("gsi_entries");
+  localStorage.removeItem("gsi_badge");
+  alert("Word file created. Saved data has been deleted.");
+};
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
