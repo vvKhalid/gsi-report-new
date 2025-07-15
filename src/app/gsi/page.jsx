@@ -163,27 +163,7 @@ export default function GSIReport() {
     alert("Saved. You can continue later by entering your badge number.");
   };
 
- fetch('https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    badge: "رقم البادج",
-    date: "التاريخ",
-    mainLocation: "الموقع الرئيسي",
-    sideLocation: "الموقع الفرعي",
-    exactLocation: "المكان بالضبط",
-    findings: "الوصف والملاحظات",
-    status: "الحالة",
-    classification: "التصنيف",
-    risk: "مستوى الخطورة"
-  })
-})
-.then(res => res.json())
-.then(response => console.log(response))
-.catch(err => console.error('Error:', err));
-
+ 
 
 
   // لإضافة ملاحظة جديدة
@@ -379,8 +359,27 @@ export default function GSIReport() {
     });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Report_PhotoNumbers.docx");
+  const formData = {
+    badge: document.querySelector('[id^="badge"]').value,
+    date: document.querySelector('[id^="date"]').value,
+    mainLocation: document.querySelector('[id^="location"]').value,
+    sideLocation: document.querySelector('[id^="assignedInspection"]').value,
+    exactLocation: document.querySelector('[id^="exactLocation"]').value,
+    findings: document.querySelector('[id^="description"]').value,
+    status: document.querySelector('[id^="status"]').value,
+    classification: document.querySelector('[id^="classification"]').value,
+    risk: document.querySelector('[id^="risk"]').value,
+  };
 
-      entries.forEach(entry => sendToSheet(entry));
+  // ارسال البيانات للشيت
+  fetch('https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  })
+  .then(res => res.json())
+  .then(response => console.log(response))
+  .catch(err => console.error('Error:', err));
 
 
     // حذف البيانات بعد إنشاء الملف
