@@ -355,21 +355,23 @@ export default function GSIReport() {
  const SHEET_URL = "https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec";
 const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
 
+const formData = entries[0]; // ✅ خذ أول عنصر من البيانات
+
 fetch(PROXY_URL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    badge: entry.badge,
-    date: entry.date,
-    mainLocation: entry.mainLocation,
-    sideLocation: entry.sideLocation,
-    exactLocation: entry.exactLocation,
-    findings: entry.findings,
-    status: entry.status,
-    classification: entry.classification,
-    risk: entry.risk,
+    badge: formData.badge,
+    date: formData.date,
+    mainLocation: formData.mainLocation,
+    sideLocation: formData.sideLocation,
+    exactLocation: formData.exactLocation,
+    findings: formData.findings,
+    status: formData.status,
+    classification: formData.classification,
+    risk: formData.risk,
   })
 })
   .then(res => res.json())
@@ -379,6 +381,7 @@ fetch(PROXY_URL, {
   .catch(err => {
     console.error("❌ فشل الإرسال:", err);
   });
+
 
 
   const blob = await Packer.toBlob(doc);
