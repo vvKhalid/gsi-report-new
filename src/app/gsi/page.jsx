@@ -352,16 +352,34 @@ export default function GSIReport() {
     ],
   });
 
-  const formData = entries[0];
+ const SHEET_URL = "https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec";
+const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
 
-  fetch('https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData)
+fetch(PROXY_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    badge: entry.badge,
+    date: entry.date,
+    mainLocation: entry.mainLocation,
+    sideLocation: entry.sideLocation,
+    exactLocation: entry.exactLocation,
+    findings: entry.findings,
+    status: entry.status,
+    classification: entry.classification,
+    risk: entry.risk,
   })
-    .then(res => res.json())
-    .then(response => console.log(response))
-    .catch(err => console.error('Error:', err));
+})
+  .then(res => res.json())
+  .then(data => {
+    console.log("✅ تم إرسال البيانات بنجاح:", data);
+  })
+  .catch(err => {
+    console.error("❌ فشل الإرسال:", err);
+  });
+
 
   const blob = await Packer.toBlob(doc);
   saveAs(blob, "GSI_Report_PhotoNumbers.docx");
