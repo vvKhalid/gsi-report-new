@@ -357,18 +357,16 @@ export default function GSIReport() {
         },
       ],
     });
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "GSI_Report_PhotoNumbers.docx");
-  const formData = {
-    badge: document.querySelector('[id^="badge"]').value,
-    date: document.querySelector('[id^="date"]').value,
-    mainLocation: document.querySelector('[id^="location"]').value,
-    sideLocation: document.querySelector('[id^="assignedInspection"]').value,
-    exactLocation: document.querySelector('[id^="exactLocation"]').value,
-    findings: document.querySelector('[id^="description"]').value,
-    status: document.querySelector('[id^="status"]').value,
-    classification: document.querySelector('[id^="classification"]').value,
-    risk: document.querySelector('[id^="risk"]').value,
+      const formData = {
+    badge: document.querySelector('[id*="badge"]').value,
+    date: document.querySelector('input[type="date"]').value,
+    mainLocation: document.querySelector('[id*="Location"]').value,
+    sideLocation: document.querySelector('[id*="Assigned"]').value,
+    exactLocation: document.querySelector('[placeholder*="exact location"]').value,
+    findings: document.querySelector('[placeholder*="Description"]').value,
+    status: document.querySelector('[id*="status"]').value,
+    classification: document.querySelector('[id*="classification"]').value,
+    risk: document.querySelector('[id*="Risk"]').value,
   };
 
   // ارسال البيانات للشيت
@@ -380,8 +378,9 @@ export default function GSIReport() {
   .then(res => res.json())
   .then(response => console.log(response))
   .catch(err => console.error('Error:', err));
-
-
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, "GSI_Report_PhotoNumbers.docx");
+  
     // حذف البيانات بعد إنشاء الملف
     localStorage.removeItem("gsi_entries");
     localStorage.removeItem("gsi_badge");
