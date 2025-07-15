@@ -357,19 +357,19 @@ export default function GSIReport() {
         },
       ],
     });
-      const formData = {
-    badge: document.querySelector('[id*="badge"]').value,
-    date: document.querySelector('input[type="date"]').value,
-    mainLocation: document.querySelector('[id*="Location"]').value,
-    sideLocation: document.querySelector('[id*="Assigned"]').value,
-    exactLocation: document.querySelector('[placeholder*="exact location"]').value,
-    findings: document.querySelector('[placeholder*="Description"]').value,
-    status: document.querySelector('[id*="status"]').value,
-    classification: document.querySelector('[id*="classification"]').value,
-    risk: document.querySelector('[id*="Risk"]').value,
+        const formData = {
+    badge: entry.badge,
+    date: entry.date,
+    mainLocation: entry.mainLocation,
+    sideLocation: entry.sideLocation,
+    exactLocation: entry.exactLocation,
+    findings: entry.findings,
+    status: entry.status,
+    classification: entry.classification,
+    risk: entry.risk,
   };
 
-  // ارسال البيانات للشيت
+  // إرسال البيانات لـ Google Sheet
   fetch('https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
