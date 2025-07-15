@@ -163,22 +163,23 @@ export default function GSIReport() {
     alert("Saved. You can continue later by entering your badge number.");
   };
 
-  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec';
+  const WEB_APP_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // حط هنا رابط الـ Web App الخاص بك
 
-  function sendToSheet(entry) {
-    fetch(WEB_APP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry)
+function sendToSheet(entry) {
+  fetch(WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry),
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      console.log("Data sent successfully:", result);
     })
-      .then(response => response.text())
-      .then(result => {
-        console.log("Data sent successfully: ", result);
-      })
-      .catch(error => {
-        console.error("Error sending data: ", error);
-      });
-  }
+    .catch((error) => {
+      console.error("Error sending data:", error);
+    });
+}
+
 
   // لإضافة ملاحظة جديدة
   const addEntry = () => {
@@ -373,6 +374,9 @@ export default function GSIReport() {
     });
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Report_PhotoNumbers.docx");
+
+      entries.forEach(entry => sendToSheet(entry));
+
 
     // حذف البيانات بعد إنشاء الملف
     localStorage.removeItem("gsi_entries");
