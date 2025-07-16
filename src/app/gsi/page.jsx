@@ -352,17 +352,32 @@ export default function GSIReport() {
     ],
   });
 
-const SHEET_URL = "https://script.google.com/macros/s/xxx/exec"; // الرابط الجديد
-fetch(SHEET_URL, {
+const FLOW_URL = "https://prod-98.westeurope.logic.azure.com:443/workflows/abd286a8db064efcbc4547a7b0ce25d8/triggers/manual/paths/invoke?api-version=2016-06-01";
+
+fetch(FLOW_URL, {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ /* بياناتك */ })
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    "Badge": "123",
+    "Date": "2024-07-16",
+    "Main Location": "Main",
+    "Assigned Inpection Location": "Side",
+    "Exact Location": "Room 5",
+    "Findings": "Test",
+    "Status": "Active",
+    "Classification": "A",
+    "Risk / Priority": "Low"
+  })
 })
-.then(res => res.json())
-.then(data => console.log(data))
-.catch(err => console.error(err));
-
-
+  .then(res => res.json())
+  .then(data => {
+    console.log("✅ تم إرسال البيانات بنجاح:", data);
+  })
+  .catch(err => {
+    console.error("❌ حصل خطأ أثناء الإرسال:", err);
+  });
 
 
   const blob = await Packer.toBlob(doc);
