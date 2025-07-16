@@ -352,35 +352,15 @@ export default function GSIReport() {
     ],
   });
 
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec";
-const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
-
-const formData = entries[0];
-
-fetch(PROXY_URL, {
+const SHEET_URL = "https://script.google.com/macros/s/xxx/exec"; // الرابط الجديد
+fetch(SHEET_URL, {
   method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    badge: formData.badge,
-    date: formData.date,
-    mainLocation: formData.mainLocation,
-    sideLocation: formData.sideLocation,
-    exactLocation: formData.exactLocation,
-    findings: formData.findings,
-    status: formData.status,
-    classification: formData.classification,
-    risk: formData.risk,
-  })
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ /* بياناتك */ })
 })
-  .then(res => res.json())
-  .then(data => {
-    console.log("✅ تم إرسال البيانات بنجاح:", data);
-  })
-  .catch(err => {
-    console.error("❌ فشل الإرسال:", err);
-  });
+.then(res => res.json())
+.then(data => console.log(data))
+.catch(err => console.error(err));
 
 
 
