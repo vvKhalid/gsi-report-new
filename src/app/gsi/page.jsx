@@ -352,23 +352,26 @@ export default function GSIReport() {
     ],
   });
 
-const FLOW_URL = "https://prod-98.westeurope.logic.azure.com:443/workflows/abd286a8db064efcbc4547a7b0ce25d8/triggers/manual/paths/invoke?api-version=2016-06-01";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec";
+const PROXY_URL = "https://cors-anywhere.herokuapp.com/" + SHEET_URL;
 
-fetch(FLOW_URL, {
+const formData = entries[0]; // ✅ خذ أول عنصر من البيانات
+
+fetch(PROXY_URL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    "Badge": "123",
-    "Date": "2024-07-16",
-    "Main Location": "Main",
-    "Assigned Inpection Location": "Side",
-    "Exact Location": "Room 5",
-    "Findings": "Test",
-    "Status": "Active",
-    "Classification": "A",
-    "Risk / Priority": "Low"
+    badge: formData.badge,
+    date: formData.date,
+    mainLocation: formData.mainLocation,
+    sideLocation: formData.sideLocation,
+    exactLocation: formData.exactLocation,
+    findings: formData.findings,
+    status: formData.status,
+    classification: formData.classification,
+    risk: formData.risk,
   })
 })
   .then(res => res.json())
@@ -376,8 +379,9 @@ fetch(FLOW_URL, {
     console.log("✅ تم إرسال البيانات بنجاح:", data);
   })
   .catch(err => {
-    console.error("❌ حصل خطأ أثناء الإرسال:", err);
+    console.error("❌ فشل الإرسال:", err);
   });
+
 
 
   const blob = await Packer.toBlob(doc);
