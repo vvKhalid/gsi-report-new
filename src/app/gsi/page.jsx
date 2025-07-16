@@ -353,9 +353,9 @@ export default function GSIReport() {
   });
 
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec";
-const PROXY_URL = "https://cors-anywhere.herokuapp.com/" + SHEET_URL;
+const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
 
-const formData = entries[0]; // ✅ خذ أول عنصر من البيانات
+const formData = entries[0];
 
 fetch(PROXY_URL, {
   method: "POST",
@@ -381,6 +381,7 @@ fetch(PROXY_URL, {
   .catch(err => {
     console.error("❌ فشل الإرسال:", err);
   });
+
 
 
 
