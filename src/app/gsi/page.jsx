@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun } from "docx";
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -131,7 +134,6 @@ export default function GSIReport() {
     {
       badge: "",
       classification: "",
-      date: "",
       location: "",
       mainLocation: "",
       sideLocation: "",
@@ -139,9 +141,14 @@ export default function GSIReport() {
       findings: "",
       status: "",
       risk: "",
-      images: []
+      images: [],
+      dateFrom: "",
+      dateTo: ""
     }
   ]);
+  // state لمتابعة أي Date Picker مفتوح
+  const [openDateIdx, setOpenDateIdx] = useState(null);
+
   const [loggedIn, setLoggedIn] = useState(false);
   const [badgeInput, setBadgeInput] = useState("");
   const [userName, setUserName] = useState("");
@@ -163,29 +170,30 @@ export default function GSIReport() {
     alert("Saved. You can continue later by entering your badge number.");
   };
 
- 
-
-
   // لإضافة ملاحظة جديدة
-  const addEntry = () => {
-    const last = entries[entries.length - 1] || {};
-    setEntries([
-      ...entries,
-      {
-        badge: last.badge || "",
-        date: last.date || "",
-        mainLocation: last.mainLocation || "",
-        sideLocation: last.sideLocation || "",
-        location: last.location || "",
-        exactLocation: last.exactLocation || "",
-        findings: "",
-        status: "",
-        classification: "",
-        risk: "",
-        images: []
-      }
-    ]);
-  };
+ const addEntry = () => {
+  const last = entries[entries.length - 1] || {};
+  const first = entries[0] || {}; // ✅ هذا السطر مهم
+
+  setEntries([
+    ...entries,
+    {
+      badge: last.badge || "",
+      dateFrom: first.dateFrom || "",   // ✅ الآن تعمل
+      dateTo: first.dateTo || "",
+      mainLocation: last.mainLocation || "",
+      sideLocation: last.sideLocation || "",
+      location: last.location || "",
+      exactLocation: last.exactLocation || "",
+      findings: "",
+      status: "",
+      classification: "",
+      risk: "",
+      images: []
+    }
+  ]);
+};
+
 
   // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
@@ -217,7 +225,7 @@ export default function GSIReport() {
       new TableRow({
         children: [
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
           new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
@@ -252,7 +260,7 @@ export default function GSIReport() {
         return new TableRow({
           children: [
             new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: `${entry.dateFrom || ""} - ${entry.dateTo || ""}`, alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
@@ -273,7 +281,7 @@ export default function GSIReport() {
             }),
             new Paragraph({
               children: [
-                new TextRun({ text: `Date: ${entries[0]?.date || ""}` }),
+                new TextRun({ text: `Date Range: ${entries[0]?.dateFrom || ""} - ${entries[0]?.dateTo || ""}` }),
               ],
               spacing: { after: 240 }
             }),
@@ -308,7 +316,7 @@ export default function GSIReport() {
               new TableRow({
                 children: [
                   new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date/time", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                   new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                   new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
                   new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
@@ -329,7 +337,7 @@ export default function GSIReport() {
                 return new TableRow({
                   children: [
                     new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.date, alignment: "center" })] }),
+                    new TableCell({ children: [new Paragraph({ text: `${entry.dateFrom || ""} - ${entry.dateTo || ""}`, alignment: "center" })] }),
                     new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
                     new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
                     new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
@@ -351,37 +359,6 @@ export default function GSIReport() {
       },
     ],
   });
-const API_URL = "https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01";
-
-
-const formData = entries[0]; // ✅ خذ أول عنصر من البيانات
-
-fetch(API_URL, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    badge: formData.badge,
-    date: formData.date,
-    mainLocation: formData.mainLocation,
-    sideLocation: formData.sideLocation,
-    exactLocation: formData.exactLocation,
-    findings: formData.findings,
-    status: formData.status,
-    classification: formData.classification,
-    risk: formData.risk,
-  })
-})
-  .then(res => res.json())
-  .then(data => {
-    console.log("✅ تم إرسال البيانات بنجاح:", data);
-  })
-  .catch(err => {
-    console.error("❌ فشل الإرسال:", err);
-  });
-
-
 
   const blob = await Packer.toBlob(doc);
   saveAs(blob, "GSI_Report_PhotoNumbers.docx");
@@ -491,28 +468,89 @@ fetch(API_URL, {
             borderLeft: "6px solid #2563eb"
           }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
-              {/* Date */}
-              <div style={{ marginBottom: 12 }}>
-                <label
-                  htmlFor={`date-${idx}`}
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    color: "#2563eb",
-                    display: "block",
-                    marginBottom: 6,
-                  }}
-                >
-                  Date
-                </label>
-                <input
-                  id={`date-${idx}`}
-                  type="date"
-                  value={entry.date}
-                  onChange={e => updateEntry(idx, "date", e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
+              
+              {/* Date Range Picker */}
+             <div style={{ marginBottom: 12, position: "relative" }}>
+  <label style={{
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#2563eb",
+    display: "block",
+    marginBottom: 6,
+  }}>
+    Date Range 
+  </label>
+<button
+  style={{
+    ...mainBtnStyle,
+    fontSize: 15,
+    padding: "6px 16px",
+    marginBottom: 5
+  }}
+  onClick={() => setOpenDateIdx(idx)}
+  type="button"
+>
+  {entry.dateFrom && entry.dateTo
+    ? (new Date(entry.dateFrom) <= new Date(entry.dateTo)
+        ? `${entry.dateFrom} → ${entry.dateTo}`
+        : `${entry.dateTo} → ${entry.dateFrom}`)
+    : "Pick Date Range"}
+</button>
+  {openDateIdx === idx && (
+    <div style={{
+      position: "absolute",
+      zIndex: 1000,
+      background: "#fff",
+      boxShadow: "0 8px 28px #0002",
+      borderRadius: 18,
+      padding: 18,
+      marginTop: 10
+    }}>
+<DateRange
+  editableDateInputs={true}
+  onChange={item => {
+    let start = item.selection.startDate;
+    let end = item.selection.endDate;
+
+    // رتبهم قبل التخزين دائماً
+    if (start && end && start.getTime() > end.getTime()) {
+      [start, end] = [end, start];
+    }
+    updateEntry(idx, "dateFrom", start.toISOString().slice(0, 10));
+    updateEntry(idx, "dateTo", end.toISOString().slice(0, 10));
+  }}
+  moveRangeOnFirstSelection={false}
+  ranges={[{
+    startDate: entry.dateFrom ? new Date(entry.dateFrom) : new Date(),
+    endDate: entry.dateTo ? new Date(entry.dateTo) : new Date(),
+    key: 'selection'
+  }]}
+/><button
+  style={{ ...mainBtnStyle, fontSize: 13, padding: "3px 12px", marginLeft: 7 }}
+  type="button"
+  onClick={() => {
+    const today = new Date().toISOString().slice(0, 10);
+    updateEntry(idx, "dateFrom", today);
+    updateEntry(idx, "dateTo", today);
+    setOpenDateIdx(null);
+  }}
+>
+  Only Today
+  </button>
+
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          style={{ ...mainBtnStyle, background: "#e11d48", fontSize: 14, marginTop: 6 }}
+          type="button"
+          onClick={() => setOpenDateIdx(null)}
+        >Close</button>
+      </div>
+    </div>
+  )}
+</div>
+
+              
+              {/* باقي الحقول مثل السابق... */}
               {/* Location Dropdowns */}
               <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
                 <div>
@@ -695,7 +733,6 @@ fetch(API_URL, {
                 >
                   Attach Photos (2 Max)
                 </label>
-
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
                   <input
                     id={`image-upload-${idx}`}
@@ -766,7 +803,7 @@ fetch(API_URL, {
         {/* الأزرار */}
         <div style={{ display: "flex", gap: 13, justifyContent: "center", marginTop: 15, flexWrap: "wrap" }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
-          <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word </button>
+          <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word</button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
           <button style={mainBtnStyle} onClick={saveForLater}>Save for later</button>
