@@ -351,7 +351,7 @@ export default function GSIReport() {
       },
     ],
   });
-const API_URL = "https://prod-99.westus.logic.azure.com:443/workflows/ee21619fe5d54ae7ac38a23cf118432f/triggers/manual/paths/invoke?api-version=2016-06-01";
+const API_URL = "https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01";
 
 
 const formData = entries[0]; // ✅ خذ أول عنصر من البيانات
