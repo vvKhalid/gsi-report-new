@@ -351,13 +351,12 @@ export default function GSIReport() {
       },
     ],
   });
+const API_URL = "https://prod-99.westus.logic.azure.com:443/workflows/ee21619fe5d54ae7ac38a23cf118432f/triggers/manual/paths/invoke?api-version=2016-06-01";
 
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbzw35Q7FYxLKz0w3KTCy-9-TcXLB-XZCFqkkkeaqa3L1mFOzzpr66gOskP7-C2Fu5qB/exec";
-const PROXY_URL = "https://cors-anywhere.herokuapp.com/" + SHEET_URL;
 
 const formData = entries[0]; // ✅ خذ أول عنصر من البيانات
 
-fetch(PROXY_URL, {
+fetch(API_URL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
