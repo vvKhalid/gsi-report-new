@@ -2,9 +2,8 @@
 import { useState, useEffect } from "react";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun } from "docx";
-import { DateRange } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -146,6 +145,30 @@ export default function GSIReport() {
       dateTo: ""
     }
   ]);
+  function formatRangeForTable(from, to) {
+  if (!from || !to) return "";
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+
+  const dayFrom = fromDate.getDate();
+  const dayTo = toDate.getDate();
+  const month = fromDate.toLocaleString("default", { month: "long" });
+  const year = fromDate.getFullYear();
+
+  if (
+    fromDate.getMonth() === toDate.getMonth() &&
+    fromDate.getFullYear() === toDate.getFullYear()
+  ) {
+    // مثال: 17 to 18 \n July-2025
+    return `${dayFrom} to ${dayTo}\n${month}-${year}`;
+  } else {
+    // مختلفين للاحتياط (نادر يصير)
+    const monthTo = toDate.toLocaleString("default", { month: "long" });
+    const yearTo = toDate.getFullYear();
+    return `${dayFrom} of ${month} - ${year}\nto\n${dayTo} of ${monthTo} - ${yearTo}`;
+  }
+}
+  
   // state لمتابعة أي Date Picker مفتوح
   const [openDateIdx, setOpenDateIdx] = useState(null);
 
@@ -160,7 +183,6 @@ export default function GSIReport() {
     if (savedBadge && savedEntries) {
       setBadgeInput(savedBadge);
       setEntries(JSON.parse(savedEntries));
-      // تقدر تسوي setLoggedIn(true); إذا تبي يدخل تلقائي
     }
   }, []);
 
@@ -171,29 +193,27 @@ export default function GSIReport() {
   };
 
   // لإضافة ملاحظة جديدة
- const addEntry = () => {
-  const last = entries[entries.length - 1] || {};
-  const first = entries[0] || {}; // ✅ هذا السطر مهم
-
-  setEntries([
-    ...entries,
-    {
-      badge: last.badge || "",
-      dateFrom: first.dateFrom || "",   // ✅ الآن تعمل
-      dateTo: first.dateTo || "",
-      mainLocation: last.mainLocation || "",
-      sideLocation: last.sideLocation || "",
-      location: last.location || "",
-      exactLocation: last.exactLocation || "",
-      findings: "",
-      status: "",
-      classification: "",
-      risk: "",
-      images: []
-    }
-  ]);
-};
-
+  const addEntry = () => {
+    const last = entries[entries.length - 1] || {};
+    const first = entries[0] || {};
+    setEntries([
+      ...entries,
+      {
+        badge: last.badge || "",
+        dateFrom: last.dateFrom || "",
+        dateTo: last.dateTo || "",
+        mainLocation: last.mainLocation || "",
+        sideLocation: last.sideLocation || "",
+        location: last.location || "",
+        exactLocation: last.exactLocation || "",
+        findings: "",
+        status: "",
+        classification: "",
+        risk: "",
+        images: []
+      }
+    ]);
+  };
 
   // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
@@ -220,91 +240,264 @@ export default function GSIReport() {
   };
 
   // ملف مع الصور الحقيقية
-  const generateWordWithImages = async () => {
-    const tableRows = [
-      new TableRow({
-        children: [
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-          new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        ],
-      }),
-      ...(await Promise.all(entries.map(async (entry, index) => {
-        let imageParagraphs = [];
-        if (entry.images && entry.images.length > 0) {
-          for (let i = 0; i < entry.images.length; i++) {
-            const imgFile = entry.images[i];
-            const imgBase64 = await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = e => resolve(e.target.result.split(",")[1]);
-              reader.readAsDataURL(imgFile);
-            });
-            imageParagraphs.push(
-              new Paragraph({
-                children: [
-                  new ImageRun({
-                    data: Uint8Array.from(atob(imgBase64), c => c.charCodeAt(0)),
-                    transformation: { width: 120, height: 70 }
-                  })
-                ],
-                alignment: "center"
-              })
-            );
-          }
-        } else {
-          imageParagraphs.push(new Paragraph({ text: "" }));
+const generateWordWithImages = async () => {
+  function formatRangeForTable(dateFrom, dateTo) {
+    if (!dateFrom || !dateTo) return "";
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+    const month = from.toLocaleString("en-US", { month: "long" });
+    const year = from.getFullYear();
+    if (from.getTime() === to.getTime()) {
+      return `${from.getDate()} ${month} - ${year}`;
+    } else {
+      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
+    }
+  }
+
+  function getGlobalDateRange(entries) {
+    let dates = [];
+    entries.forEach(e => {
+      if (e.dateFrom) dates.push(new Date(e.dateFrom));
+      if (e.dateTo) dates.push(new Date(e.dateTo));
+    });
+    if (dates.length === 0) return ["", ""];
+    dates.sort((a, b) => a - b);
+    return [dates[0], dates[dates.length - 1]];
+  }
+
+  function formatRangeForHeader(dateFrom, dateTo) {
+    if (!dateFrom || !dateTo) return "";
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+    const month = from.toLocaleString("en-US", { month: "long" });
+    const year = from.getFullYear();
+    if (from.getTime() === to.getTime()) {
+      return `${from.getDate()} ${month} - ${year}`;
+    } else if (
+      from.getMonth() === to.getMonth() &&
+      from.getFullYear() === to.getFullYear()
+    ) {
+      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
+    } else {
+      // مختلفين شهر أو سنة
+      return `${from.getDate()} ${month} - ${from.getFullYear()} to ${to.getDate()} ${to.toLocaleString("en-US", { month: "long" })} - ${to.getFullYear()}`;
+    }
+  }
+
+  const [minDate, maxDate] = getGlobalDateRange(entries);
+
+  const allSameRange = entries.every(
+    x => x.dateFrom === entries[0].dateFrom && x.dateTo === entries[0].dateTo
+  );
+
+  const tableRows = [
+    new TableRow({
+      children: [
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        ...(!allSameRange
+          ? [new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] })]
+          : []),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+      ],
+    }),
+    ...(await Promise.all(entries.map(async (entry, index) => {
+      let imageParagraphs = [];
+      if (entry.images && entry.images.length > 0) {
+        for (let i = 0; i < entry.images.length; i++) {
+          const imgFile = entry.images[i];
+          const imgBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result.split(",")[1]);
+            reader.readAsDataURL(imgFile);
+          });
+          imageParagraphs.push(
+            new Paragraph({
+              children: [
+                new ImageRun({
+                  data: Uint8Array.from(atob(imgBase64), c => c.charCodeAt(0)),
+                  transformation: { width: 120, height: 70 }
+                })
+              ],
+              alignment: "center"
+            })
+          );
         }
+      } else {
+        imageParagraphs.push(new Paragraph({ text: "" }));
+      }
+      return new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
+          ...(!allSameRange
+            ? [new TableCell({
+                children: [
+                  new Paragraph({
+                    text: formatRangeForTable(entry.dateFrom, entry.dateTo),
+                    alignment: "center",
+                  }),
+                ],
+              })]
+            : []),
+          new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
+          new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
+          new TableCell({ children: imageParagraphs }),
+        ],
+      });
+    }))
+    )
+  ];
+
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          // Location أعلى اليسار
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Location: ${entries[0]?.mainLocation || ""}${entries[0]?.sideLocation ? " - " + entries[0]?.sideLocation : ""}`,
+                bold: true,
+                size: 28, // حجم أكبر
+                color: "2563eb", // أزرق
+              }),
+            ],
+            alignment: "left",
+            spacing: { after: 50 }, // مسافة تحت
+          }),
+          // Date Range أعلى اليسار تحت Location
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Date Range: ${formatRangeForHeader(minDate, maxDate)}`,
+                bold: true,
+                size: 26,
+                color: "2563eb",
+              }),
+            ],
+            alignment: "left",
+            spacing: { after: 120 },
+          }),
+
+          // الجدول الرئيسي
+          new Table({
+            rows: tableRows,
+            width: { size: 100, type: "pct" }
+          }),
+        ],
+      },
+    ],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, "GSI_Report_withPhotos.docx");
+  localStorage.removeItem("gsi_entries");
+  localStorage.removeItem("gsi_badge");
+  alert("Word file created. Saved data has been deleted.");
+};
+
+function groupEntries(entries) {
+  const groups = {};
+  entries.forEach((entry) => {
+    const key = [
+      String(entry.dateFrom || ""),
+      String(entry.dateTo || ""),
+      String(entry.mainLocation || ""),
+      String(entry.sideLocation || "")
+    ].join("__");
+    if (!groups[key]) {
+      groups[key] = { ...entry, mergedFindings: [entry.findings], mergedEntries: [entry] };
+    } else {
+      groups[key].mergedFindings.push(entry.findings);
+      groups[key].mergedEntries.push(entry);
+    }
+  });
+  return Object.values(groups);
+}
+async function sendToExcelViaLogicApp(data) {
+  const url = "https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01";
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+}
+
+const generateWordPhotoNumbers = async () => {
+  function formatRangeForTable(dateFrom, dateTo) {
+    if (!dateFrom || !dateTo) return "";
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+    const month = from.toLocaleString("en-US", { month: "long" });
+    const year = from.getFullYear();
+    if (from.getTime() === to.getTime()) {
+      return `${from.getDate()} ${month} - ${year}`;
+    } else {
+      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
+    }
+  }
+await sendToExcelViaLogicApp(entries); // يرسل كل الملاحظات قبل إنشاء الوورد
+
+  function groupEntries(entries) {
+    const groups = {};
+    entries.forEach(e => {
+      const key = [
+        String(e.dateFrom || ""),
+        String(e.dateTo || ""),
+        String(e.mainLocation || ""),
+        String(e.sideLocation || "")
+      ].join("__");
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(e);
+    });
+    return Object.values(groups);
+  }
+
+  let photoCounter = 1;
+  const grouped = groupEntries(entries);
+
+  const tableRows = [
+    new TableRow({
+      children: [
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+      ],
+    }),
+    ...grouped.flatMap((group, groupIdx) => {
+      return group.map((entry, idx) => {
+        let photoText = "";
+        if (entry.images && entry.images.length > 0) {
+          const start = photoCounter;
+          const end = photoCounter + entry.images.length - 1;
+          photoText = entry.images.length === 1 ? `Photo#${start}` : `Photos#${start},${end}`;
+          photoCounter += entry.images.length;
+        }
+        // الأعمدة تتكرر
         return new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: `${entry.dateFrom || ""} - ${entry.dateTo || ""}`, alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: String(idx + 1), alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: formatRangeForTable(entry.dateFrom, entry.dateTo), alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
             new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
-            new TableCell({ children: imageParagraphs }),
+            new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "", alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: entry.findings || "", alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: entry.status || "", alignment: "center" })] }),
+            new TableCell({ children: [new Paragraph({ text: entry.risk || "", alignment: "center" })] }),
           ],
         });
-      })))
-    ];
-    const doc = new Document({
-      sections: [
-        {
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({ text: `Location: ${entries[0]?.mainLocation || ""}${entries[0]?.sideLocation ? " - " + entries[0]?.sideLocation : ""}` }),
-              ],
-              spacing: { after: 120 }
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({ text: `Date Range: ${entries[0]?.dateFrom || ""} - ${entries[0]?.dateTo || ""}` }),
-              ],
-              spacing: { after: 240 }
-            }),
-            new Table({
-              rows: tableRows,
-              width: { size: 100, type: "pct" }
-            }),
-          ],
-        },
-      ],
-    });
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "GSI_Report_withPhotos.docx");
+      });
+    }),
+  ];
 
-    // حذف البيانات بعد إنشاء الملف
-    localStorage.removeItem("gsi_entries");
-    localStorage.removeItem("gsi_badge");
-    alert("Word file created. Saved data has been deleted.");
-  };
-
-  // ملف أرقام الصور فقط
- const generateWordPhotoNumbers = async () => {
-  let photoCounter = 1;
   const doc = new Document({
     sections: [
       {
@@ -312,43 +505,8 @@ export default function GSIReport() {
           new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
           new Paragraph(" "),
           new Table({
-            rows: [
-              new TableRow({
-                children: [
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                  new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-                ],
-              }),
-              ...entries.map((entry, index) => {
-                let photoText = "";
-                if (entry.images && entry.images.length > 0) {
-                  const start = photoCounter;
-                  const end = photoCounter + entry.images.length - 1;
-                  photoText = entry.images.length === 1 ? `Photo#${start}` : `Photos#${start},${end}`;
-                  photoCounter += entry.images.length;
-                }
-                return new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: `${entry.dateFrom || ""} - ${entry.dateTo || ""}`, alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.status, alignment: "center" })] }),
-                    new TableCell({ children: [new Paragraph({ text: entry.risk, alignment: "center" })] }),
-                  ],
-                });
-              }),
-            ],
+            rows: tableRows,
+            width: { size: 100, type: "pct" }
           }),
           new Paragraph(" "),
           new Paragraph("Kindly see the inspection photos attached for your easy reference."),
@@ -362,11 +520,11 @@ export default function GSIReport() {
 
   const blob = await Packer.toBlob(doc);
   saveAs(blob, "GSI_Report_PhotoNumbers.docx");
-
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
   alert("Word file created. Saved data has been deleted.");
 };
+
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
@@ -386,7 +544,6 @@ export default function GSIReport() {
             if (badgeUsers[badgeInput.trim()]) {
               setLoggedIn(true);
               setUserName(badgeUsers[badgeInput.trim()]);
-              // جلب البيانات المحفوظة إذا فيه بيانات محفوظة بنفس البادج
               const savedBadge = localStorage.getItem("gsi_badge");
               const savedEntries = localStorage.getItem("gsi_entries");
               if (savedBadge === badgeInput.trim() && savedEntries) {
@@ -468,90 +625,33 @@ export default function GSIReport() {
             borderLeft: "6px solid #2563eb"
           }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
-              
               {/* Date Range Picker */}
-             <div style={{ marginBottom: 12, position: "relative" }}>
-  <label style={{
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#2563eb",
-    display: "block",
-    marginBottom: 6,
-  }}>
-    Date Range 
-  </label>
-<button
-  style={{
-    ...mainBtnStyle,
-    fontSize: 15,
-    padding: "6px 16px",
-    marginBottom: 5
-  }}
-  onClick={() => setOpenDateIdx(idx)}
-  type="button"
->
-  {entry.dateFrom && entry.dateTo
-    ? (new Date(entry.dateFrom) <= new Date(entry.dateTo)
-        ? `${entry.dateFrom} → ${entry.dateTo}`
-        : `${entry.dateTo} → ${entry.dateFrom}`)
-    : "Pick Date Range"}
-</button>
-  {openDateIdx === idx && (
-    <div style={{
-      position: "absolute",
-      zIndex: 1000,
-      background: "#fff",
-      boxShadow: "0 8px 28px #0002",
-      borderRadius: 18,
-      padding: 18,
-      marginTop: 10
-    }}>
-<DateRange
-  editableDateInputs={true}
-  onChange={item => {
-    let start = item.selection.startDate;
-    let end = item.selection.endDate;
-
-    // رتبهم قبل التخزين دائماً
-    if (start && end && start.getTime() > end.getTime()) {
-      [start, end] = [end, start];
-    }
-    updateEntry(idx, "dateFrom", start.toISOString().slice(0, 10));
-    updateEntry(idx, "dateTo", end.toISOString().slice(0, 10));
-  }}
-  moveRangeOnFirstSelection={false}
-  ranges={[{
-    startDate: entry.dateFrom ? new Date(entry.dateFrom) : new Date(),
-    endDate: entry.dateTo ? new Date(entry.dateTo) : new Date(),
-    key: 'selection'
-  }]}
-/><button
-  style={{ ...mainBtnStyle, fontSize: 13, padding: "3px 12px", marginLeft: 7 }}
-  type="button"
-  onClick={() => {
-    const today = new Date().toISOString().slice(0, 10);
-    updateEntry(idx, "dateFrom", today);
-    updateEntry(idx, "dateTo", today);
-    setOpenDateIdx(null);
-  }}
->
-  Only Today
-  </button>
-
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button
-          style={{ ...mainBtnStyle, background: "#e11d48", fontSize: 14, marginTop: 6 }}
-          type="button"
-          onClick={() => setOpenDateIdx(null)}
-        >Close</button>
-      </div>
-    </div>
-  )}
+           <div style={{ marginBottom: 12, display: "flex", gap: 8, alignItems: "center" }}>
+  <div>
+    <label style={{ fontWeight: "bold", fontSize: 16, color: "#2563eb", display: "block", marginBottom: 6 }}>
+      From
+    </label>
+    <input
+      type="date"
+      value={entry.dateFrom || ""}
+      onChange={e => updateEntry(idx, "dateFrom", e.target.value)}
+      style={inputStyle}
+    />
+  </div>
+  <div>
+    <label style={{ fontWeight: "bold", fontSize: 16, color: "#2563eb", display: "block", marginBottom: 6 }}>
+      To
+    </label>
+    <input
+      type="date"
+      value={entry.dateTo || ""}
+      onChange={e => updateEntry(idx, "dateTo", e.target.value)}
+      style={inputStyle}
+    />
+  </div>
 </div>
 
-              
-              {/* باقي الحقول مثل السابق... */}
-              {/* Location Dropdowns */}
+              {/* باقي الحقول... */}
               <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
                 <div>
                   <label
