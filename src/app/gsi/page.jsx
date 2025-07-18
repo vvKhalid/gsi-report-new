@@ -143,8 +143,20 @@ export default function GSIReport() {
       images: [],
       dateFrom: "",
       dateTo: ""
-    }
+    }  
   ]);
+const flowUrl = 'https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=k8cBrSrH7W8BdJg9g39GQ8y_d2wAZkDn2QqpZn-pbpw';
+
+// 1️⃣ دالة ترسل الـ entries للـ Excel عبر Power Automate
+async function sendToExcel(data) {
+  const res = await fetch(flowUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Excel send failed: ${res.status}`);
+}
+
   function formatRangeForTable(from, to) {
   if (!from || !to) return "";
   const fromDate = new Date(from);
@@ -415,114 +427,121 @@ function groupEntries(entries) {
   });
   return Object.values(groups);
 }
-async function sendToExcelViaLogicApp(data) {
-  const url = "https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01";
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-}
 
 const generateWordPhotoNumbers = async () => {
-  function formatRangeForTable(dateFrom, dateTo) {
-    if (!dateFrom || !dateTo) return "";
+  // 1️⃣ أرسل البيانات أولاً للإكسل عبر Power Automate
+  try {
+    await sendToExcel(entries);
+  } catch (err) {
+    console.error('Excel send error:', err);
+    alert('تعذّر حفظ البيانات في الإكسل.');
+    return;
+  }
+
+  // 2️⃣ دوال مساعدة
+  const formatRangeForTable = (dateFrom, dateTo) => {
+    if (!dateFrom || !dateTo) return '';
     const from = new Date(dateFrom);
     const to = new Date(dateTo);
-    const month = from.toLocaleString("en-US", { month: "long" });
+    const month = from.toLocaleString('en-US', { month: 'long' });
     const year = from.getFullYear();
     if (from.getTime() === to.getTime()) {
       return `${from.getDate()} ${month} - ${year}`;
     } else {
       return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
     }
-  }
-await sendToExcelViaLogicApp(entries); // يرسل كل الملاحظات قبل إنشاء الوورد
+  };
 
-  function groupEntries(entries) {
+  const groupEntries = (entries) => {
     const groups = {};
-    entries.forEach(e => {
+    entries.forEach(entry => {
       const key = [
-        String(e.dateFrom || ""),
-        String(e.dateTo || ""),
-        String(e.mainLocation || ""),
-        String(e.sideLocation || "")
-      ].join("__");
+        entry.dateFrom || '',
+        entry.dateTo   || '',
+        entry.mainLocation || '',
+        entry.sideLocation || ''
+      ].join('__');
       if (!groups[key]) groups[key] = [];
-      groups[key].push(e);
+      groups[key].push(entry);
     });
     return Object.values(groups);
-  }
+  };
 
+  // 3️⃣ جهّز صفوف الجدول مع ترقيم الصور
   let photoCounter = 1;
   const grouped = groupEntries(entries);
 
   const tableRows = [
+    // Header row
     new TableRow({
       children: [
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-      ],
+        'No.', 'Date Range', 'Location',
+        'Assigned Inspection Location',
+        'Exact Location', 'Description of Observation',
+        'Attached Photo', 'Status of Finding', 'Risk/Priority'
+      ].map(text => new TableCell({
+        shading: { fill: '4F81BD' },
+        children: [ new Paragraph({
+          children: [ new TextRun({ text, bold: true, color: 'FFFFFF' }) ],
+          alignment: 'center'
+        }) ]
+      }))
     }),
-    ...grouped.flatMap((group, groupIdx) => {
-      return group.map((entry, idx) => {
-        let photoText = "";
-        if (entry.images && entry.images.length > 0) {
+    // Data rows
+    ...grouped.flatMap(group => 
+      group.map((entry, idx) => {
+        let photoText = '';
+        if (entry.images?.length) {
           const start = photoCounter;
-          const end = photoCounter + entry.images.length - 1;
-          photoText = entry.images.length === 1 ? `Photo#${start}` : `Photos#${start},${end}`;
+          const end   = photoCounter + entry.images.length - 1;
+          photoText = entry.images.length === 1
+            ? `Photo#${start}`
+            : `Photos#${start},${end}`;
           photoCounter += entry.images.length;
         }
-        // الأعمدة تتكرر
         return new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ text: String(idx + 1), alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: formatRangeForTable(entry.dateFrom, entry.dateTo), alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.findings || "", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.status || "", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.risk || "", alignment: "center" })] }),
-          ],
+            String(idx + 1),
+            formatRangeForTable(entry.dateFrom, entry.dateTo),
+            entry.mainLocation   || '—',
+            entry.sideLocation   || '—',
+            entry.exactLocation  || '',
+            entry.findings       || '',
+            photoText,
+            entry.status         || '',
+            entry.risk           || ''
+          ].map(value => new TableCell({
+            children: [ new Paragraph({ text: value, alignment: 'center' }) ]
+          }))
         });
-      });
-    }),
+      })
+    )
   ];
 
+  // 4️⃣ أنشئ المستند ونزّله
   const doc = new Document({
-    sections: [
-      {
-        children: [
-          new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
-          new Paragraph(" "),
-          new Table({
-            rows: tableRows,
-            width: { size: 100, type: "pct" }
-          }),
-          new Paragraph(" "),
-          new Paragraph("Kindly see the inspection photos attached for your easy reference."),
-          new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
-          new Paragraph("Thank you for your usual cooperation."),
-          new Paragraph("Best Regards."),
-        ],
-      },
-    ],
+    sections: [{
+      children: [
+        new Paragraph('We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;'),
+        new Paragraph(''),
+        new Table({ rows: tableRows, width: { size: 100, type: 'pct' } }),
+        new Paragraph(''),
+        new Paragraph('Kindly see the inspection photos attached for your easy reference.'),
+        new Paragraph('We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.'),
+        new Paragraph('Thank you for your usual cooperation.'),
+        new Paragraph('Best Regards.')
+      ]
+    }]
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, "GSI_Report_PhotoNumbers.docx");
-  localStorage.removeItem("gsi_entries");
-  localStorage.removeItem("gsi_badge");
-  alert("Word file created. Saved data has been deleted.");
+  saveAs(blob, 'GSI_Report_PhotoNumbers.docx');
+
+  // 5️⃣ نظّف التخزين المحلي
+  localStorage.removeItem('gsi_entries');
+  localStorage.removeItem('gsi_badge');
+
+  alert('Word file created. Saved data has been deleted.');
 };
 
 
