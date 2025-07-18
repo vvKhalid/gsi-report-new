@@ -127,6 +127,31 @@ const LOCATIONS = {
     "South of Riyadh Hemodialysis Center"
   ],
 };
+const flowUrl = 'https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=k8cBrSrH7W8BdJg9g39GQ8y_d2wAZkDn2QqpZn-pbpw';
+
+// 👇 ضعها هنا، مباشرة بعد flowUrl
+async function sendToExcel(entries) {
+  for (const entry of entries) {
+    const payload = {
+      Badge: entry.badge,
+      Date: entry.dateFrom,
+      "Main Location": entry.mainLocation,
+      "Assigned Inspection Location": entry.sideLocation,
+      "Exact Location": entry.exactLocation,
+      "Description of Observation": entry.findings,
+      Status: entry.status,
+      "Risk / Priority": entry.risk
+    };
+    const res = await fetch(flowUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      throw new Error(`Excel send failed: ${res.status}`);
+    }
+  }
+}
 
 export default function GSIReport() {
   const [entries, setEntries] = useState([
@@ -145,17 +170,6 @@ export default function GSIReport() {
       dateTo: ""
     }  
   ]);
-const flowUrl = 'https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=k8cBrSrH7W8BdJg9g39GQ8y_d2wAZkDn2QqpZn-pbpw';
-
-// 1️⃣ دالة ترسل الـ entries للـ Excel عبر Power Automate
-async function sendToExcel(data) {
-  const res = await fetch(flowUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(`Excel send failed: ${res.status}`);
-}
 
   function formatRangeForTable(from, to) {
   if (!from || !to) return "";
@@ -429,7 +443,7 @@ function groupEntries(entries) {
 }
 
 const generateWordPhotoNumbers = async () => {
-  // 1️⃣ أرسل البيانات أولاً للإكسل عبر Power Automate
+  // 1️⃣ أرسل كل Entry أولاً
   try {
     await sendToExcel(entries);
   } catch (err) {
@@ -439,92 +453,80 @@ const generateWordPhotoNumbers = async () => {
   }
 
   // 2️⃣ دوال مساعدة
-  const formatRangeForTable = (dateFrom, dateTo) => {
-    if (!dateFrom || !dateTo) return '';
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
-    const month = from.toLocaleString('en-US', { month: 'long' });
-    const year = from.getFullYear();
-    if (from.getTime() === to.getTime()) {
-      return `${from.getDate()} ${month} - ${year}`;
-    } else {
-      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
-    }
+  const formatRangeForTable = (from, to) => {
+    if (!from || !to) return '';
+    const d1 = new Date(from), d2 = new Date(to);
+    const m = d1.toLocaleString('en-US',{month:'long'}), y=d1.getFullYear();
+    return d1.getTime()===d2.getTime()
+      ? `${d1.getDate()} ${m} - ${y}`
+      : `${d1.getDate()} to ${d2.getDate()} ${m} - ${y}`;
   };
-
-  const groupEntries = (entries) => {
-    const groups = {};
-    entries.forEach(entry => {
-      const key = [
-        entry.dateFrom || '',
-        entry.dateTo   || '',
-        entry.mainLocation || '',
-        entry.sideLocation || ''
-      ].join('__');
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(entry);
+  const groupEntries = arr => {
+    const map = {};
+    arr.forEach(e => {
+      const key = [e.dateFrom, e.dateTo, e.mainLocation, e.sideLocation].join('__');
+      map[key] = map[key]||[];
+      map[key].push(e);
     });
-    return Object.values(groups);
+    return Object.values(map);
   };
 
   // 3️⃣ جهّز صفوف الجدول مع ترقيم الصور
   let photoCounter = 1;
   const grouped = groupEntries(entries);
-
   const tableRows = [
-    // Header row
+    // header
     new TableRow({
       children: [
-        'No.', 'Date Range', 'Location',
-        'Assigned Inspection Location',
-        'Exact Location', 'Description of Observation',
-        'Attached Photo', 'Status of Finding', 'Risk/Priority'
-      ].map(text => new TableCell({
-        shading: { fill: '4F81BD' },
-        children: [ new Paragraph({
-          children: [ new TextRun({ text, bold: true, color: 'FFFFFF' }) ],
-          alignment: 'center'
+        'No.','Date Range','Location',
+        'Assigned Inspection Location','Exact Location',
+        'Description of Observation','Attached Photo',
+        'Status of Finding','Risk/Priority'
+      ].map(txt => new TableCell({
+        shading:{fill:'4F81BD'},
+        children:[ new Paragraph({
+          children:[ new TextRun({text:txt,bold:true,color:'FFFFFF'}) ],
+          alignment:'center'
         }) ]
       }))
     }),
-    // Data rows
-    ...grouped.flatMap(group => 
-      group.map((entry, idx) => {
+    // data
+    ...grouped.flatMap(group =>
+      group.map((e, idx) => {
         let photoText = '';
-        if (entry.images?.length) {
-          const start = photoCounter;
-          const end   = photoCounter + entry.images.length - 1;
-          photoText = entry.images.length === 1
+        if (e.images?.length) {
+          const start = photoCounter, end = photoCounter + e.images.length - 1;
+          photoText = e.images.length===1
             ? `Photo#${start}`
             : `Photos#${start},${end}`;
-          photoCounter += entry.images.length;
+          photoCounter += e.images.length;
         }
         return new TableRow({
           children: [
-            String(idx + 1),
-            formatRangeForTable(entry.dateFrom, entry.dateTo),
-            entry.mainLocation   || '—',
-            entry.sideLocation   || '—',
-            entry.exactLocation  || '',
-            entry.findings       || '',
+            String(idx+1),
+            formatRangeForTable(e.dateFrom,e.dateTo),
+            e.mainLocation||'—',
+            e.sideLocation||'—',
+            e.exactLocation||'',
+            e.findings||'',
             photoText,
-            entry.status         || '',
-            entry.risk           || ''
-          ].map(value => new TableCell({
-            children: [ new Paragraph({ text: value, alignment: 'center' }) ]
+            e.status||'',
+            e.risk||''
+          ].map(val=>new TableCell({
+            children:[new Paragraph({text:val,alignment:'center'})]
           }))
         });
       })
     )
   ];
 
-  // 4️⃣ أنشئ المستند ونزّله
+  // 4️⃣ أنشئ وحمّل الـ Word
   const doc = new Document({
-    sections: [{
-      children: [
+    sections:[{
+      children:[
         new Paragraph('We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;'),
         new Paragraph(''),
-        new Table({ rows: tableRows, width: { size: 100, type: 'pct' } }),
+        new Table({ rows: tableRows, width: { size:100, type:'pct' } }),
         new Paragraph(''),
         new Paragraph('Kindly see the inspection photos attached for your easy reference.'),
         new Paragraph('We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.'),
@@ -537,10 +539,9 @@ const generateWordPhotoNumbers = async () => {
   const blob = await Packer.toBlob(doc);
   saveAs(blob, 'GSI_Report_PhotoNumbers.docx');
 
-  // 5️⃣ نظّف التخزين المحلي
+  // 5️⃣ نظّف التخزين
   localStorage.removeItem('gsi_entries');
   localStorage.removeItem('gsi_badge');
-
   alert('Word file created. Saved data has been deleted.');
 };
 
