@@ -130,7 +130,7 @@ const LOCATIONS = {
 const flowUrl = 'https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=k8cBrSrH7W8BdJg9g39GQ8y_d2wAZkDn2QqpZn-pbpw';
 
 async function sendToExcel(entries) {
-  // 1️⃣ جمع كل التواريخ وترتيبها
+  // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
   const allDates = entries
     .flatMap(e => [e.dateFrom, e.dateTo])
     .filter(Boolean)
@@ -139,26 +139,28 @@ async function sendToExcel(entries) {
 
   if (allDates.length === 0) return;
 
-  // 2️⃣ دالة تنسيق التاريخ
+  // 2️⃣ دالة تنسيق التاريخ مثل m/d/yyyy
   const fmt = d => `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
 
-  // أول وآخر
+  // أول وآخر تاريخ
   const first = allDates[0];
   const last  = allDates[allDates.length - 1];
 
-  // 3️⃣ نطاق التاريخ بـ to أو تاريخ واحد
+  // 3️⃣ أنشئ نطاق التاريخ: إذا واحد فقط، طبع التاريخ، وإلا "first to last"
   const dateRange =
     first.getTime() === last.getTime()
       ? fmt(first)
       : `${fmt(first)} to ${fmt(last)}`;
 
-  // 4️⃣ أرسل كل entry للـ Flow مع كل الحقول (بدون الصور)
+  // 4️⃣ أرسل كل entry للـ Power Automate بدون الصور
   for (const e of entries) {
     const payload = {
       Badge: e.badge,
-      Date: dateRange,
+      Date: dateRange,                                  // التاريخ المجمّع
       "Main Location": e.mainLocation,
-      "Assigned Inspection Location": e.sideLocation,
+      // إذا جدول الـ Excel لديك يكتب Inpection (بدون s)،
+      // غيّر المفتاح بالضبط لهناك:
+      "Assigned Inspection Location": e.sideLocation,   
       "Exact Location": e.exactLocation,
       Findings: e.findings,
       Classification: e.classification,
@@ -176,7 +178,6 @@ async function sendToExcel(entries) {
     }
   }
 }
-
 export default function GSIReport() {
   const [entries, setEntries] = useState([
     {
