@@ -127,7 +127,7 @@ const LOCATIONS = {
     "South of Riyadh Hemodialysis Center"
   ],
 };
-const flowUrl = 'https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=k8cBrSrH7W8BdJg9g39GQ8y_d2wAZkDn2QqpZn-pbpw';
+const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
 
 async function sendToExcel(entries) {
   // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
