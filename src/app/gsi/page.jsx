@@ -129,19 +129,43 @@ const LOCATIONS = {
 };
 const flowUrl = 'https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=k8cBrSrH7W8BdJg9g39GQ8y_d2wAZkDn2QqpZn-pbpw';
 
-// 👇 ضعها هنا، مباشرة بعد flowUrl
 async function sendToExcel(entries) {
-  for (const entry of entries) {
+  // 1️⃣ جمع كل التواريخ وترتيبها
+  const allDates = entries
+    .flatMap(e => [e.dateFrom, e.dateTo])
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .sort((a, b) => a - b);
+
+  if (allDates.length === 0) return;
+
+  // 2️⃣ دالة تنسيق التاريخ
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+
+  // أول وآخر
+  const first = allDates[0];
+  const last  = allDates[allDates.length - 1];
+
+  // 3️⃣ نطاق التاريخ بـ to أو تاريخ واحد
+  const dateRange =
+    first.getTime() === last.getTime()
+      ? fmt(first)
+      : `${fmt(first)} to ${fmt(last)}`;
+
+  // 4️⃣ أرسل كل entry للـ Flow مع كل الحقول (بدون الصور)
+  for (const e of entries) {
     const payload = {
-      Badge: entry.badge,
-      Date: entry.dateFrom,
-      "Main Location": entry.mainLocation,
-      "Assigned Inspection Location": entry.sideLocation,
-      "Exact Location": entry.exactLocation,
-      "Description of Observation": entry.findings,
-      Status: entry.status,
-      "Risk / Priority": entry.risk
+      Badge: e.badge,
+      Date: dateRange,
+      "Main Location": e.mainLocation,
+      "Assigned Inspection Location": e.sideLocation,
+      "Exact Location": e.exactLocation,
+      Findings: e.findings,
+      Classification: e.classification,
+      Status: e.status,
+      "Risk / Priority": e.risk
     };
+
     const res = await fetch(flowUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
