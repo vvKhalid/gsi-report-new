@@ -159,6 +159,7 @@ const LOCATIONS = {
 };
 const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s';
 
+const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
 
 async function sendToExcel(entries) {
   // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
