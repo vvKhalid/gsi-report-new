@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { uploadReportBlob, uploadImageBlob } from "./lib/storage";
 import { employeesMap } from "@/data/employees";
 import LastReportsPopup from "@/components/LastReportsPopup";
-
+import { Analytics } from "@vercel/analytics/next"
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
