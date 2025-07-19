@@ -230,6 +230,7 @@ export default function GSIReport() {
     }  
   ]);
 const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
+const [showStatsPopup, setShowStatsPopup] = useState(false); // إذا عندك popup ثاني للإحصائيات
 
 
   function formatRangeForTable(from, to) {
@@ -1059,8 +1060,11 @@ alert("Word file created. Saved data has been deleted.");
     {/* هنا الـ popup */}
     {showLastReportsPopup && (
       <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
+      
     )}
-
+{showStatsPopup && (
+  <StatisticsPopup onClose={() => setShowStatsPopup(false)} />
+)}
     </div>
   );
 }
@@ -1275,9 +1279,6 @@ const [showLastReports, setShowLastReports] = useState(false);
 
       
       </div>
-{showLastReportsPopup && (
-  <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
-)}
 
     </div>
   );
