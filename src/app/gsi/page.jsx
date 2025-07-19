@@ -776,71 +776,71 @@ alert("Word file created. Saved data has been deleted.");
 </div>
 
               {/* باقي الحقول... */}
-              <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
-                <div>
-                  <label
-                    htmlFor={`main-location-${idx}`}
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: 16,
-                      color: "#2563eb",
-                      display: "block",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Location
-                  </label>
-                  <select
-                    id={`main-location-${idx}`}
-                    value={entry.mainLocation || ""}
-                    onChange={e => {
-                      updateEntry(idx, "mainLocation", e.target.value);
-                      updateEntry(idx, "sideLocation", "");
-                      if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
-                        updateEntry(idx, "location", e.target.value);
-                      } else {
-                        updateEntry(idx, "location", "");
-                      }
-                    }}
-                    style={{ ...inputStyle, minWidth: 180 }}
-                  >
-                    <option value="">Select Location</option>
-                    {Object.keys(LOCATIONS).map(main => (
-                      <option key={main} value={main}>{main}</option>
-                    ))}
-                  </select>
-                </div>
-                {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
-                  <div>
-                    <label
-                      htmlFor={`side-location-${idx}`}
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        color: "#2563eb",
-                        display: "block",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Assigned Inspection Location
-                    </label>
-                    <select
-                      id={`side-location-${idx}`}
-                      value={entry.sideLocation || ""}
-                      onChange={e => {
-                        updateEntry(idx, "sideLocation", e.target.value);
-                        updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
-                      }}
-                      style={{ ...inputStyle, minWidth: 200 }}
-                    >
-                      <option value="">Select Assigned Inspection Location</option>
-                      {LOCATIONS[entry.mainLocation].map(side => (
-                        <option key={side} value={side}>{side}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
+         <div className="flex gap-4 location-fields">
+  <div>
+    <label
+      htmlFor={`main-location-${idx}`}
+      style={{
+        fontWeight: "bold",
+        fontSize: 16,
+        color: "#2563eb",
+        display: "block",
+        marginBottom: 6,
+      }}
+    >
+      Location
+    </label>
+    <select
+      id={`main-location-${idx}`}
+      value={entry.mainLocation || ""}
+      onChange={e => {
+        updateEntry(idx, "mainLocation", e.target.value);
+        updateEntry(idx, "sideLocation", "");
+        if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
+          updateEntry(idx, "location", e.target.value);
+        } else {
+          updateEntry(idx, "location", "");
+        }
+      }}
+      style={{ ...inputStyle, minWidth: 180 }}
+    >
+      <option value="">Select Location</option>
+      {Object.keys(LOCATIONS).map(main => (
+        <option key={main} value={main}>{main}</option>
+      ))}
+    </select>
+  </div>
+  {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
+    <div>
+      <label
+        htmlFor={`side-location-${idx}`}
+        style={{
+          fontWeight: "bold",
+          fontSize: 16,
+          color: "#2563eb",
+          display: "block",
+          marginBottom: 6,
+        }}
+      >
+        Assigned Inspection Location
+      </label>
+      <select
+        id={`side-location-${idx}`}
+        value={entry.sideLocation || ""}
+        onChange={e => {
+          updateEntry(idx, "sideLocation", e.target.value);
+          updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
+        }}
+        style={{ ...inputStyle, minWidth: 200 }}
+      >
+        <option value="">Select Assigned Inspection Location</option>
+        {LOCATIONS[entry.mainLocation].map(side => (
+          <option key={side} value={side}>{side}</option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
               {/* Exact Location */}
               <div style={{ marginBottom: 12 }}>
                 <label
