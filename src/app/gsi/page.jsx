@@ -4,6 +4,10 @@ import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun } from "docx";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { uploadReportBlob, uploadImageBlob } from "./lib/storage";
+import { employeesMap } from "@/data/employees";
+import LastReportsPopup from "@/components/LastReportsPopup";
+
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -57,6 +61,32 @@ const statsContentStyle = {
   padding: 32,
   border: "1px solid #dbeafe"
 };
+const excelBtnStyle = {
+  background: "linear-gradient(90deg, #21c65e 0%, #34d399 100%)",
+  color: "#fff",
+  fontWeight: 600,
+  border: "none",
+  borderRadius: 10,
+  fontSize: 16,
+  padding: "10px 19px",
+  boxShadow: "0 2px 8px #21c65e40",
+  cursor: "pointer",
+  transition: "background 0.2s",
+};
+
+const lastReportsBtnStyle = {
+  background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
+  color: "#fff",
+  fontWeight: 600,
+  border: "none",
+  borderRadius: 10,
+  fontSize: 16,
+  padding: "10px 19px",
+  boxShadow: "0 2px 8px #6366f140",
+  cursor: "pointer",
+  transition: "background 0.2s",
+};
+
 
 // ====== دالة إنشاء منطقة فارغة للإحصائية ======
 function makeEmptyArea(name) {
@@ -127,6 +157,60 @@ const LOCATIONS = {
     "South of Riyadh Hemodialysis Center"
   ],
 };
+const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s';
+
+const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
+
+async function sendToExcel(entries) {
+  // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
+  const allDates = entries
+    .flatMap(e => [e.dateFrom, e.dateTo])
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .sort((a, b) => a - b);
+
+  if (allDates.length === 0) return;
+
+  // 2️⃣ دالة تنسيق التاريخ مثل m/d/yyyy
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+
+  // أول وآخر تاريخ
+  const first = allDates[0];
+  const last  = allDates[allDates.length - 1];
+
+  // 3️⃣ أنشئ نطاق التاريخ: إذا واحد فقط، طبع التاريخ، وإلا "first to last"
+  const dateRange =
+    first.getTime() === last.getTime()
+      ? fmt(first)
+      : `${fmt(first)} to ${fmt(last)}`;
+
+  // 4️⃣ أرسل كل entry للـ Power Automate بدون الصور
+  for (const e of entries) {
+    const payload = {
+      Badge: e.badge,
+      Date: dateRange,                                  // التاريخ المجمّع
+      "Main Location": e.mainLocation,
+      // إذا جدول الـ Excel لديك يكتب Inpection (بدون s)،
+      // غيّر المفتاح بالضبط لهناك:
+      "Assigned Inspection Location": e.sideLocation,   
+      "Exact Location": e.exactLocation,
+      Findings: e.findings,
+      Classification: e.classification,
+      Status: e.status,
+      "Risk / Priority": e.risk
+    };
+
+    const res = await fetch(flowUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      throw new Error(`Excel send failed: ${res.status}`);
+    }
+  }
+}
+
 
 export default function GSIReport() {
   const [entries, setEntries] = useState([
@@ -143,8 +227,11 @@ export default function GSIReport() {
       images: [],
       dateFrom: "",
       dateTo: ""
-    }
+    }  
   ]);
+const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
+
+
   function formatRangeForTable(from, to) {
   if (!from || !to) return "";
   const fromDate = new Date(from);
@@ -389,12 +476,34 @@ const generateWordWithImages = async () => {
       },
     ],
   });
+// ... بعد Packer.toBlob(doc) داخل generateWordWithImages
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, "GSI_Report_withPhotos.docx");
-  localStorage.removeItem("gsi_entries");
-  localStorage.removeItem("gsi_badge");
-  alert("Word file created. Saved data has been deleted.");
+const blob    = await Packer.toBlob(doc);
+const badge = entries[0]?.badge || "UnknownBadge";
+const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
+const today = new Date();
+const dateString = today.toISOString().slice(0,10);
+
+const filename = `Photos_${assignedLocation}_${badge}_${dateString}.docx`;
+
+
+// upload + download
+let fileUrl;
+try {
+ const badge = entries[0]?.badge;
+fileUrl = await uploadReportBlob(blob, filename, badge);
+  console.log("Uploaded report to:", fileUrl);
+} catch (err) {
+  console.error("Upload report failed", err);
+  alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
+}
+saveAs(blob, filename);
+
+// تنظيف
+localStorage.removeItem("gsi_entries");
+localStorage.removeItem("gsi_badge");
+alert("Word file created. Saved data has been deleted.");
+
 };
 
 function groupEntries(entries) {
@@ -415,114 +524,129 @@ function groupEntries(entries) {
   });
   return Object.values(groups);
 }
-async function sendToExcelViaLogicApp(data) {
-  const url = "https://prod-89.westus.logic.azure.com:443/workflows/76c10bbdaf0b4758ab0b7e2cf3dfd323/triggers/manual/paths/invoke?api-version=2016-06-01";
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-}
 
 const generateWordPhotoNumbers = async () => {
-  function formatRangeForTable(dateFrom, dateTo) {
-    if (!dateFrom || !dateTo) return "";
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
-    const month = from.toLocaleString("en-US", { month: "long" });
-    const year = from.getFullYear();
-    if (from.getTime() === to.getTime()) {
-      return `${from.getDate()} ${month} - ${year}`;
-    } else {
-      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
-    }
+  // 1️⃣ أرسل كل Entry أولاً
+  try {
+    await sendToExcel(entries);
+  } catch (err) {
+    console.error('Excel send error:', err);
+    alert('تعذّر حفظ البيانات في الإكسل.');
+    return;
   }
-await sendToExcelViaLogicApp(entries); // يرسل كل الملاحظات قبل إنشاء الوورد
 
-  function groupEntries(entries) {
-    const groups = {};
-    entries.forEach(e => {
-      const key = [
-        String(e.dateFrom || ""),
-        String(e.dateTo || ""),
-        String(e.mainLocation || ""),
-        String(e.sideLocation || "")
-      ].join("__");
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(e);
+  // 2️⃣ دوال مساعدة
+  const formatRangeForTable = (from, to) => {
+    if (!from || !to) return '';
+    const d1 = new Date(from), d2 = new Date(to);
+    const m = d1.toLocaleString('en-US',{month:'long'}), y=d1.getFullYear();
+    return d1.getTime()===d2.getTime()
+      ? `${d1.getDate()} ${m} - ${y}`
+      : `${d1.getDate()} to ${d2.getDate()} ${m} - ${y}`;
+  };
+  const groupEntries = arr => {
+    const map = {};
+    arr.forEach(e => {
+      const key = [e.dateFrom, e.dateTo, e.mainLocation, e.sideLocation].join('__');
+      map[key] = map[key]||[];
+      map[key].push(e);
     });
-    return Object.values(groups);
-  }
+    return Object.values(map);
+  };
 
+  // 3️⃣ جهّز صفوف الجدول مع ترقيم الصور
   let photoCounter = 1;
   const grouped = groupEntries(entries);
-
   const tableRows = [
+    // header
     new TableRow({
       children: [
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Assigned Inspection Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Status of Finding", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Risk/Priority", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-      ],
+        'No.','Date Range','Location',
+        'Assigned Inspection Location','Exact Location',
+        'Description of Observation','Attached Photo',
+        'Status of Finding','Risk/Priority'
+      ].map(txt => new TableCell({
+        shading:{fill:'4F81BD'},
+        children:[ new Paragraph({
+          children:[ new TextRun({text:txt,bold:true,color:'FFFFFF'}) ],
+          alignment:'center'
+        }) ]
+      }))
     }),
-    ...grouped.flatMap((group, groupIdx) => {
-      return group.map((entry, idx) => {
-        let photoText = "";
-        if (entry.images && entry.images.length > 0) {
-          const start = photoCounter;
-          const end = photoCounter + entry.images.length - 1;
-          photoText = entry.images.length === 1 ? `Photo#${start}` : `Photos#${start},${end}`;
-          photoCounter += entry.images.length;
+    // data
+    ...grouped.flatMap(group =>
+      group.map((e, idx) => {
+        let photoText = '';
+        if (e.images?.length) {
+          const start = photoCounter, end = photoCounter + e.images.length - 1;
+          photoText = e.images.length===1
+            ? `Photo#${start}`
+            : `Photos#${start},${end}`;
+          photoCounter += e.images.length;
         }
-        // الأعمدة تتكرر
         return new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ text: String(idx + 1), alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: formatRangeForTable(entry.dateFrom, entry.dateTo), alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.mainLocation || "—", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.sideLocation || "—", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.findings || "", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: photoText, alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.status || "", alignment: "center" })] }),
-            new TableCell({ children: [new Paragraph({ text: entry.risk || "", alignment: "center" })] }),
-          ],
+            String(idx+1),
+            formatRangeForTable(e.dateFrom,e.dateTo),
+            e.mainLocation||'—',
+            e.sideLocation||'—',
+            e.exactLocation||'',
+            e.findings||'',
+            photoText,
+            e.status||'',
+            e.risk||''
+          ].map(val=>new TableCell({
+            children:[new Paragraph({text:val,alignment:'center'})]
+          }))
         });
-      });
-    }),
+      })
+    )
   ];
 
+  // 4️⃣ أنشئ وحمّل الـ Word
   const doc = new Document({
-    sections: [
-      {
-        children: [
-          new Paragraph("We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;"),
-          new Paragraph(" "),
-          new Table({
-            rows: tableRows,
-            width: { size: 100, type: "pct" }
-          }),
-          new Paragraph(" "),
-          new Paragraph("Kindly see the inspection photos attached for your easy reference."),
-          new Paragraph("We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum."),
-          new Paragraph("Thank you for your usual cooperation."),
-          new Paragraph("Best Regards."),
-        ],
-      },
-    ],
+    sections:[{
+      children:[
+        new Paragraph('We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;'),
+        new Paragraph(''),
+        new Table({ rows: tableRows, width: { size:100, type:'pct' } }),
+        new Paragraph(''),
+        new Paragraph('Kindly see the inspection photos attached for your easy reference.'),
+        new Paragraph('We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.'),
+        new Paragraph('Thank you for your usual cooperation.'),
+        new Paragraph('Best Regards.')
+      ]
+    }]
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, "GSI_Report_PhotoNumbers.docx");
-  localStorage.removeItem("gsi_entries");
-  localStorage.removeItem("gsi_badge");
-  alert("Word file created. Saved data has been deleted.");
+const badge = entries[0]?.badge || "UnknownBadge";
+const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
+const today = new Date();
+const dateString = today.toISOString().slice(0,10);
+
+const filename = `Report_${assignedLocation}_${badge}_${dateString}.docx`;
+
+
+// 6️⃣ حاول ترفع الملف أولاً وخزّن الرابط
+let fileUrl;
+try {
+const badge = entries[0]?.badge;
+fileUrl = await uploadReportBlob(blob, filename, badge);
+  console.log("Uploaded report to:", fileUrl);
+} catch (err) {
+  console.error("Upload report failed", err);
+  // لو الرفع فشل ممكن تنبه المستخدم أو تستمر وتنزل الملف محلياً:
+  alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
+}
+
+// 7️⃣ نزّل الملف للمستخدم
+saveAs(blob, filename);
+
+// 8️⃣ نظّف التخزين المحلي
+localStorage.removeItem("gsi_entries");
+localStorage.removeItem("gsi_badge");
+alert("Word file created. Saved data has been deleted.");
 };
 
 
@@ -913,6 +1037,30 @@ await sendToExcelViaLogicApp(entries); // يرسل كل الملاحظات قب�
           <StatisticsPopup onClose={() => setShowStats(false)} />
         )}
       </div>
+      {/* زر فتح شيت الإكسل باللون الأخضر تحت الأزرار */}
+    {/* زرّ Excel & Last Reports */}
+    
+    <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', gap: 12, justifyContent: 'center' }}>
+ <button style={excelBtnStyle} onClick={() => window.open(excelUrl, '_blank')}>
+  Open Excel Sheet
+</button>
+<button
+  style={lastReportsBtnStyle}
+  onClick={() => {
+    console.log("Last Reports clicked");
+    setShowLastReportsPopup(true);
+  }}
+>
+  Last Reports
+</button>
+    </div>
+    {/* … النموذج وأزرار أخرى … */}
+
+    {/* هنا الـ popup */}
+    {showLastReportsPopup && (
+      <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
+    )}
+
     </div>
   );
 }
@@ -988,18 +1136,22 @@ function StatisticsPopup({ onClose }) {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Areas_Statistics.docx");
   };
+const [showLastReports, setShowLastReports] = useState(false);
 
   return (
     <div style={statsPopupStyle}>
       <div style={statsContentStyle}>
-        <h2 style={{ color: "#2563eb", textAlign: "center", marginBottom: 8 }}>Areas Statistics</h2>
+        <h2 style={{ color: "#2563eb", textAlign: "center", marginBottom: 8 }}>
+          Areas Statistics
+        </h2>
+
         {/* إضافة منطقة جديدة */}
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
           <input
             type="text"
             placeholder="Enter area/location name"
             value={currentName}
-            onChange={e => setCurrentName(e.target.value)}
+            onChange={(e) => setCurrentName(e.target.value)}
             style={{
               padding: 6,
               fontSize: 15,
@@ -1009,69 +1161,124 @@ function StatisticsPopup({ onClose }) {
               background: "#fff",
               color: "#2563eb",
               fontWeight: "bold",
-              outline: "none"
+              outline: "none",
             }}
           />
           <button
             onClick={addArea}
             style={{
-              background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, padding: "8px 14px", fontWeight: 600, cursor: "pointer"
+              background: "#2563eb",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 14,
+              padding: "8px 14px",
+              fontWeight: 600,
+              cursor: "pointer",
             }}
           >
             Add Area
           </button>
         </div>
+
         {/* قائمة الأماكن والإحصائيات */}
-        <div style={{ maxHeight: 1000, overflow: "auto" }}>
-          {areas.map((area, areaIdx) => (
-            area.name.trim() &&
-            <div key={areaIdx} style={{
-              background: "#f3f7ff",
-              borderRadius: 11,
-              boxShadow: "0 2px 12px #60a5fa14",
-              padding: 1,
-              marginBottom: 18,
-              borderLeft: "6px solid #2563eb"
-            }}>
-              <h3 style={{ margin: 0, color: "#2563eb", fontSize: 17 }}>{area.name}</h3>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 9, marginBottom: 2 }}>
-                <thead>
-                  <tr style={{ background: "#dbeafe", color: "#1e293b" }}>
-                    <th style={cellStyle}>Type</th>
-                    <th style={cellStyle}>Total</th>
-                    <th style={cellStyle}>With Findings</th>
-                    <th style={cellStyle}>No Findings</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {area.stats.map(stat => (
-                    <tr key={stat.key}>
-                      <td style={{ ...cellStyle, color: "#2563eb", fontWeight: "bold" }}>{stat.label}</td>
-                      <td style={cellStyle}>
-                        <input type="number" min={0} value={stat.total} onChange={e => updateStat(areaIdx, stat.key, "total", e.target.value)} style={inputStyle} />
-                      </td>
-                      <td style={cellStyle}>
-                        <input type="number" min={0} value={stat.withFindings} onChange={e => updateStat(areaIdx, stat.key, "withFindings", e.target.value)} style={inputStyle} />
-                      </td>
-                      <td style={cellStyle}>
-                        <input type="number" min={0} value={stat.withoutFindings} onChange={e => updateStat(areaIdx, stat.key, "withoutFindings", e.target.value)} style={inputStyle} />
-                      </td>
+        <div style={{ maxHeight: 400, overflow: "auto", marginBottom: 20 }}>
+          {areas.map((area, areaIdx) =>
+            area.name.trim() ? (
+              <div
+                key={areaIdx}
+                style={{
+                  background: "#f3f7ff",
+                  borderRadius: 11,
+                  boxShadow: "0 2px 12px #60a5fa14",
+                  padding: 12,
+                  marginBottom: 18,
+                  borderLeft: "6px solid #2563eb",
+                }}
+              >
+                <h3 style={{ margin: 0, color: "#2563eb", fontSize: 17 }}>
+                  {area.name}
+                </h3>
+                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 9 }}>
+                  <thead>
+                    <tr style={{ background: "#dbeafe", color: "#1e293b" }}>
+                      <th style={cellStyle}>Type</th>
+                      <th style={cellStyle}>Total</th>
+                      <th style={cellStyle}>With Findings</th>
+                      <th style={cellStyle}>No Findings</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
+                  </thead>
+                  <tbody>
+                    {area.stats.map((stat) => (
+                      <tr key={stat.key}>
+                        <td style={{ ...cellStyle, color: "#2563eb", fontWeight: "bold" }}>
+                          {stat.label}
+                        </td>
+                        <td style={cellStyle}>
+                          <input
+                            type="number"
+                            min={0}
+                            value={stat.total}
+                            onChange={(e) =>
+                              updateStat(areaIdx, stat.key, "total", e.target.value)
+                            }
+                            style={inputStyle}
+                          />
+                        </td>
+                        <td style={cellStyle}>
+                          <input
+                            type="number"
+                            min={0}
+                            value={stat.withFindings}
+                            onChange={(e) =>
+                              updateStat(areaIdx, stat.key, "withFindings", e.target.value)
+                            }
+                            style={inputStyle}
+                          />
+                        </td>
+                        <td style={cellStyle}>
+                          <input
+                            type="number"
+                            min={0}
+                            value={stat.withoutFindings}
+                            onChange={(e) =>
+                              updateStat(areaIdx, stat.key, "withoutFindings", e.target.value)
+                            }
+                            style={inputStyle}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null
+          )}
         </div>
-        <div style={{ textAlign: "center", marginTop: 10, display: "flex", gap: 12, justifyContent: "center" }}>
+
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: 20,
+            display: "flex",
+            gap: 12,
+            justifyContent: "center",
+          }}
+        >
           <button onClick={generateStatsWord} style={mainBtnStyle}>
             Download Statistics Word
           </button>
-          <button style={{ ...mainBtnStyle, background: "#e11d48" }} onClick={onClose}>
+          <button onClick={onClose} style={{ ...mainBtnStyle, background: "#e11d48" }}>
             Close
           </button>
         </div>
+
+      
       </div>
+{showLastReportsPopup && (
+  <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
+)}
+
     </div>
   );
 }
