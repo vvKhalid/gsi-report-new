@@ -157,6 +157,7 @@ const LOCATIONS = {
     "South of Riyadh Hemodialysis Center"
   ],
 };
+<<<<<<< HEAD
 const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s';
 
 const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
@@ -211,7 +212,59 @@ async function sendToExcel(entries) {
   }
 }
 
+=======
+const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
+>>>>>>> 830597e10c0b788953b4e9a3689954ca2e700419
 
+async function sendToExcel(entries) {
+  // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
+  const allDates = entries
+    .flatMap(e => [e.dateFrom, e.dateTo])
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .sort((a, b) => a - b);
+
+  if (allDates.length === 0) return;
+
+  // 2️⃣ دالة تنسيق التاريخ مثل m/d/yyyy
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+
+  // أول وآخر تاريخ
+  const first = allDates[0];
+  const last  = allDates[allDates.length - 1];
+
+  // 3️⃣ أنشئ نطاق التاريخ: إذا واحد فقط، طبع التاريخ، وإلا "first to last"
+  const dateRange =
+    first.getTime() === last.getTime()
+      ? fmt(first)
+      : `${fmt(first)} to ${fmt(last)}`;
+
+  // 4️⃣ أرسل كل entry للـ Power Automate بدون الصور
+  for (const e of entries) {
+    const payload = {
+      Badge: e.badge,
+      Date: dateRange,                                  // التاريخ المجمّع
+      "Main Location": e.mainLocation,
+      // إذا جدول الـ Excel لديك يكتب Inpection (بدون s)،
+      // غيّر المفتاح بالضبط لهناك:
+      "Assigned Inspection Location": e.sideLocation,   
+      "Exact Location": e.exactLocation,
+      Findings: e.findings,
+      Classification: e.classification,
+      Status: e.status,
+      "Risk / Priority": e.risk
+    };
+
+    const res = await fetch(flowUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      throw new Error(`Excel send failed: ${res.status}`);
+    }
+  }
+}
 export default function GSIReport() {
   const [entries, setEntries] = useState([
     {
@@ -229,8 +282,11 @@ export default function GSIReport() {
       dateTo: ""
     }  
   ]);
+<<<<<<< HEAD
 const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
 
+=======
+>>>>>>> 830597e10c0b788953b4e9a3689954ca2e700419
 
   function formatRangeForTable(from, to) {
   if (!from || !to) return "";
@@ -620,6 +676,7 @@ const generateWordPhotoNumbers = async () => {
   });
 
   const blob = await Packer.toBlob(doc);
+<<<<<<< HEAD
 const badge = entries[0]?.badge || "UnknownBadge";
 const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
 const today = new Date();
@@ -647,6 +704,14 @@ saveAs(blob, filename);
 localStorage.removeItem("gsi_entries");
 localStorage.removeItem("gsi_badge");
 alert("Word file created. Saved data has been deleted.");
+=======
+  saveAs(blob, 'GSI_Report_PhotoNumbers.docx');
+
+  // 5️⃣ نظّف التخزين
+  localStorage.removeItem('gsi_entries');
+  localStorage.removeItem('gsi_badge');
+  alert('Word file created. Saved data has been deleted.');
+>>>>>>> 830597e10c0b788953b4e9a3689954ca2e700419
 };
 
 
