@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { uploadReportBlob, uploadImageBlob } from "./lib/storage";
 import { employeesMap } from "@/data/employees";
 import LastReportsPopup from "@/components/LastReportsPopup";
-
+import { Analytics } from "@vercel/analytics/next"
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -159,6 +159,7 @@ const LOCATIONS = {
 };
 const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s';
 
+const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
 
 async function sendToExcel(entries) {
   // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
@@ -229,6 +230,7 @@ export default function GSIReport() {
     }  
   ]);
 const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
+const [showStatsPopup, setShowStatsPopup] = useState(false); // إذا عندك popup ثاني للإحصائيات
 
 
   function formatRangeForTable(from, to) {
@@ -775,71 +777,71 @@ alert("Word file created. Saved data has been deleted.");
 </div>
 
               {/* باقي الحقول... */}
-              <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
-                <div>
-                  <label
-                    htmlFor={`main-location-${idx}`}
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: 16,
-                      color: "#2563eb",
-                      display: "block",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Location
-                  </label>
-                  <select
-                    id={`main-location-${idx}`}
-                    value={entry.mainLocation || ""}
-                    onChange={e => {
-                      updateEntry(idx, "mainLocation", e.target.value);
-                      updateEntry(idx, "sideLocation", "");
-                      if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
-                        updateEntry(idx, "location", e.target.value);
-                      } else {
-                        updateEntry(idx, "location", "");
-                      }
-                    }}
-                    style={{ ...inputStyle, minWidth: 180 }}
-                  >
-                    <option value="">Select Location</option>
-                    {Object.keys(LOCATIONS).map(main => (
-                      <option key={main} value={main}>{main}</option>
-                    ))}
-                  </select>
-                </div>
-                {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
-                  <div>
-                    <label
-                      htmlFor={`side-location-${idx}`}
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        color: "#2563eb",
-                        display: "block",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Assigned Inspection Location
-                    </label>
-                    <select
-                      id={`side-location-${idx}`}
-                      value={entry.sideLocation || ""}
-                      onChange={e => {
-                        updateEntry(idx, "sideLocation", e.target.value);
-                        updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
-                      }}
-                      style={{ ...inputStyle, minWidth: 200 }}
-                    >
-                      <option value="">Select Assigned Inspection Location</option>
-                      {LOCATIONS[entry.mainLocation].map(side => (
-                        <option key={side} value={side}>{side}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
+         <div className="flex gap-4 location-fields">
+  <div>
+    <label
+      htmlFor={`main-location-${idx}`}
+      style={{
+        fontWeight: "bold",
+        fontSize: 16,
+        color: "#2563eb",
+        display: "block",
+        marginBottom: 6,
+      }}
+    >
+      Location
+    </label>
+    <select
+      id={`main-location-${idx}`}
+      value={entry.mainLocation || ""}
+      onChange={e => {
+        updateEntry(idx, "mainLocation", e.target.value);
+        updateEntry(idx, "sideLocation", "");
+        if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
+          updateEntry(idx, "location", e.target.value);
+        } else {
+          updateEntry(idx, "location", "");
+        }
+      }}
+      style={{ ...inputStyle, minWidth: 180 }}
+    >
+      <option value="">Select Location</option>
+      {Object.keys(LOCATIONS).map(main => (
+        <option key={main} value={main}>{main}</option>
+      ))}
+    </select>
+  </div>
+  {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
+    <div>
+      <label
+        htmlFor={`side-location-${idx}`}
+        style={{
+          fontWeight: "bold",
+          fontSize: 16,
+          color: "#2563eb",
+          display: "block",
+          marginBottom: 6,
+        }}
+      >
+        Assigned Inspection Location
+      </label>
+      <select
+        id={`side-location-${idx}`}
+        value={entry.sideLocation || ""}
+        onChange={e => {
+          updateEntry(idx, "sideLocation", e.target.value);
+          updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
+        }}
+        style={{ ...inputStyle, minWidth: 200 }}
+      >
+        <option value="">Select Assigned Inspection Location</option>
+        {LOCATIONS[entry.mainLocation].map(side => (
+          <option key={side} value={side}>{side}</option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
               {/* Exact Location */}
               <div style={{ marginBottom: 12 }}>
                 <label
@@ -1058,8 +1060,11 @@ alert("Word file created. Saved data has been deleted.");
     {/* هنا الـ popup */}
     {showLastReportsPopup && (
       <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
+      
     )}
-
+{showStatsPopup && (
+  <StatisticsPopup onClose={() => setShowStatsPopup(false)} />
+)}
     </div>
   );
 }
@@ -1274,9 +1279,6 @@ const [showLastReports, setShowLastReports] = useState(false);
 
       
       </div>
-{showLastReportsPopup && (
-  <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
-)}
 
     </div>
   );

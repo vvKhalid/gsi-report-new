@@ -16,6 +16,7 @@
     "@mui/material": "^7.2.0",
     "@mui/x-date-pickers": "^8.8.0",
     "@mui/x-date-pickers-pro": "^8.8.0",
+    "@vercel/analytics": "^1.5.0",
     "date-fns": "^4.1.0",
     "docx": "^9.5.1",
     "file-saver": "^2.0.5",
