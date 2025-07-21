@@ -736,18 +736,14 @@ alert("Word file created. Saved data has been deleted.");
   // شاشة تسجيل الدخول
   if (!loggedIn) {
   return (
-   <div
+<div
   style={{
-    position: "fixed", // أو "absolute"
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
+    minHeight: "100vh",
+    width: "100%",
     background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
     backgroundSize: "cover",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
-    zIndex: -1,
   }}
     >
       {/* الهيدر */}
@@ -931,18 +927,15 @@ alert("Word file created. Saved data has been deleted.");
 
   return (
 <div
-  style={{
-    position: "fixed", // أو "absolute"
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
-    backgroundSize: "cover",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
-    zIndex: -1,
-  }}
+style={{
+  minHeight: "100vh",
+  width: "100%",
+  background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+  backgroundSize: "cover",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+}}
+
 >
   <div
     style={{
@@ -1061,13 +1054,12 @@ alert("Word file created. Saved data has been deleted.");
     style={{
   background: "#fff",
   borderRadius: 16,
-  padding: window.innerWidth < 600 ? 10 : 20,
-  maxWidth: 900,
+  padding: "clamp(10px, 4vw, 28px)",
+  maxWidth: 500, // كافي للجوال والكمبيوتر
   width: "98vw",
-  margin: "auto",
+  margin: "24px auto",
   boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
   borderLeft: "6px solid #2563eb",
-  marginBottom: 24,
   position: "relative",
     }}
   >
