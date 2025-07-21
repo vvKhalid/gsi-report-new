@@ -8,6 +8,34 @@ import { uploadReportBlob, uploadImageBlob } from "./lib/storage";
 import { employeesMap } from "@/data/employees";
 import LastReportsPopup from "@/components/LastReportsPopup";
 import { Analytics } from "@vercel/analytics/next"
+import { useRouter } from "next/navigation";
+import React from "react";
+
+
+
+
+const containerStyle = {
+  background: "#fff",
+  borderRadius: 16,
+  padding: 20,
+  maxWidth: 900,
+  margin: "auto",
+  boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
+  borderLeft: "6px solid #2563eb",
+  marginBottom: 24,
+  position: "relative",
+};
+const flexRow = {
+  display: "flex",
+  gap: 16,
+  flexWrap: "wrap",
+  marginBottom: 16,
+};
+const flexItem = {
+  flexGrow: 1,
+  minWidth: 150,
+  maxWidth: 300,
+};
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -80,13 +108,21 @@ const lastReportsBtnStyle = {
   fontWeight: 600,
   border: "none",
   borderRadius: 10,
-  fontSize: 16,
-  padding: "10px 19px",
+  fontSize: 12,
+  padding: "6px 6px",
   boxShadow: "0 2px 8px #6366f140",
   cursor: "pointer",
   transition: "background 0.2s",
 };
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
 
 // ====== دالة إنشاء منطقة فارغة للإحصائية ======
 function makeEmptyArea(name) {
@@ -104,13 +140,19 @@ function makeEmptyArea(name) {
     ],
   };
 }
-
+  const labelStyle = {
+    fontWeight: "bold",
+    color: "#2563eb",
+    fontSize: 16,
+    marginBottom: 6,
+    display: "block",
+  };
 // ====== البادجات ======
 const badgeUsers = {
   "53075": "Hanan Al Shuwaier",
   "51888": "Bander Al Zakari",
   "55723": "Haitham Al Mughamis",
-  "56392": "Nasser Abu Haime",
+  "56392": "Nasser Abu Haimed",
   "62111": "Bader Al Enezi",
   "74770": "Sumer Alkhudeiri",
   "69444": "Khulood Al Otaibi",
@@ -124,9 +166,12 @@ const LOCATIONS = {
     "Main Hospital",
     "KASCH",
     "WHH",
-    "Cardiac Center"
+    "Cardiac Center",
+    "Dental Building",
+    "Surgical Tower",
+    "ACC"
   ],
-  "Primary Health Care": [
+  "Primary Health Care Inside Riyadh": [
     "AL Yarmouk PHC",
     "HCSC PHC",
     "NGCSC PHC",
@@ -135,9 +180,17 @@ const LOCATIONS = {
     "King Khalid PHC",
     "AL Qadessiah PHC"
   ],
+    "Primary Health Care Outside Riyadh": [
+    "Al Qassim PHC",
+    "Rafha PHC",
+    "Arar PHC",
+    "Hail PHC",
+    "Hail Hemodialysis Center",
+    "Najran PHC"
+  ],
   "External Buildings/Areas": [
-    "Dental Building",
-    "Surgical Tower",
+    
+    
     "Central Lab",
     "ISD Building",
     "Laundry Building",
@@ -231,7 +284,11 @@ export default function GSIReport() {
   ]);
 const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
 const [showStatsPopup, setShowStatsPopup] = useState(false); // إذا عندك popup ثاني للإحصائيات
+const [observations, setObservations] = useState([]);
+const handleDelete = (indexToDelete) => {
+  setEntries((prevEntries) => prevEntries.filter((_, idx) => idx !== indexToDelete));
 
+};
 
   function formatRangeForTable(from, to) {
   if (!from || !to) return "";
@@ -265,20 +322,34 @@ const [showStatsPopup, setShowStatsPopup] = useState(false); // إذا عندك 
   const [userName, setUserName] = useState("");
   const [showStats, setShowStats] = useState(false);
 
-  useEffect(() => {
-    const savedBadge = localStorage.getItem("gsi_badge");
-    const savedEntries = localStorage.getItem("gsi_entries");
-    if (savedBadge && savedEntries) {
-      setBadgeInput(savedBadge);
-      setEntries(JSON.parse(savedEntries));
-    }
-  }, []);
+useEffect(() => {
+  const savedBadge = localStorage.getItem("gsi_badge");
+  const savedEntries = localStorage.getItem("gsi_entries");
+  if (savedBadge && savedEntries) {
+    const parsedEntries = JSON.parse(savedEntries);
+    setBadgeInput(savedBadge);
+    setEntries(parsedEntries);
+  }
+}, []);
 
-  const saveForLater = () => {
-    localStorage.setItem("gsi_entries", JSON.stringify(entries));
-    localStorage.setItem("gsi_badge", badgeInput || entries[0]?.badge || "");
-    alert("Saved. You can continue later by entering your badge number.");
-  };
+const saveForLater = async () => {
+    const hasImages = entries.some(entry => entry.images && entry.images.length > 0);
+
+  if (hasImages) {
+    alert("Please delete attached photos to save. You can add them later.");
+    return; // تمنع الحفظ إذا فيه صور
+  }
+  const entriesCopy = await Promise.all(entries.map(async (entry) => {
+    const imagesBase64 = await Promise.all(
+      (entry.images || []).map(fileToBase64)
+    );
+    return { ...entry, images: imagesBase64 };
+  }));
+
+  localStorage.setItem("gsi_entries", JSON.stringify(entriesCopy));
+  localStorage.setItem("gsi_badge", badgeInput || entries[0]?.badge || "");
+  alert("Saved");
+};
 
   // لإضافة ملاحظة جديدة
   const addEntry = () => {
@@ -302,6 +373,7 @@ const [showStatsPopup, setShowStatsPopup] = useState(false); // إذا عندك 
       }
     ]);
   };
+  const [isMobile, setIsMobile] = useState(false);
 
   // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
@@ -608,11 +680,11 @@ const generateWordPhotoNumbers = async () => {
   const doc = new Document({
     sections:[{
       children:[
-        new Paragraph('We would like to bring to your kind attention the below observations noted by our representative from the General Services Inspection during the above-mentioned period;'),
+        new Paragraph('We would like to bring to your kind attention the following observations noted by our representative from the General Services Inspection during the above-mentioned period;'),
         new Paragraph(''),
         new Table({ rows: tableRows, width: { size:100, type:'pct' } }),
         new Paragraph(''),
-        new Paragraph('Kindly see the inspection photos attached for your easy reference.'),
+        new Paragraph('please see the attached inspection photos for your easy reference.'),
         new Paragraph('We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.'),
         new Paragraph('Thank you for your usual cooperation.'),
         new Paragraph('Best Regards.')
@@ -653,418 +725,594 @@ alert("Word file created. Saved data has been deleted.");
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", background: "#000000ff" }}>
-        <h2>Enter your Badge Number</h2>
-        <input
-          type="text"
-          placeholder="Badge Number"
-          value={badgeInput}
-          onChange={e => setBadgeInput(e.target.value)}
-          style={{ padding: 12, fontSize: 18, borderRadius: 8, marginBottom: 16, border: "1px solid #2563ebff" }}
-        />
-        <button
-          style={mainBtnStyle}
-          onClick={() => {
-            if (badgeUsers[badgeInput.trim()]) {
-              setLoggedIn(true);
-              setUserName(badgeUsers[badgeInput.trim()]);
-              const savedBadge = localStorage.getItem("gsi_badge");
-              const savedEntries = localStorage.getItem("gsi_entries");
-              if (savedBadge === badgeInput.trim() && savedEntries) {
-                setEntries(JSON.parse(savedEntries));
-              } else {
-                setEntries([
-                  { ...entries[0], badge: badgeInput.trim() }
-                ]);
-              }
-            } else {
-              alert("Badge not recognized. Please contact admin.");
-              localStorage.removeItem("gsi_entries");
-              localStorage.removeItem("gsi_badge");
-            }
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        minWidth: "100vw",
+        background: "linear-gradient(120deg, #d3d6fd13 0%, #0414f6ff 80%, #000000ff 100%)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* الهيدر */}
+      <div
+        style={{
+          width: "100%",
+          padding: "34px 46px 0 46px",
+          boxSizing: "border-box",
+          position: "relative",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
+        {/* يسار: شعار + وزارة */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <img
+            src="/mngha.png" // عدل المسار حسب صورتك
+            alt="mngha"
+            style={{
+              width: 54,
+              height: 54,
+              objectFit: "contain",
+            }}
+          />
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            lineHeight: 1.12,
+            minWidth: 180,
+          }}>
+            <span style={{
+              color: "#ffffffff",
+              fontWeight: 700,
+              fontSize: 21,
+              whiteSpace: "nowrap",
+              marginBottom: 2,
+            }}>
+              Ministry of National Guard
+            </span>
+            <span style={{
+              color: "#ffffffff",
+              fontWeight: 800,
+              fontSize: 18,
+              whiteSpace: "nowrap",
+              letterSpacing: ".2px",
+            }}>
+              Health Affairs
+            </span>
+          </div>
+        </div>
+        {/* يمين: عناوين التدقيق */}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: "#ffffffff", fontWeight: 700, fontSize: 21, marginBottom: 2 }}>
+            Internal Audit
+          </div>
+          <div style={{ color: "#ffffffff", fontWeight: 800, fontSize: 18 }}>
+            General Services Inspections
+          </div>
+        </div>
+      </div>
+
+      {/* فورم تسجيل الدخول في الوسط */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            background: "rgba(30,36,48,0.11)",
+            padding: 36,
+            borderRadius: 16,
+            boxShadow: "0 6px 36px #3b82f633",
+            minWidth: 320,
+            maxWidth: 340,
+            backdropFilter: "blur(1.5px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          Enter
-        </button>
+          <h2
+            style={{
+              color: "#ffffffff",
+              textShadow: "0 2px 8px #fff9",
+              marginBottom: 18,
+              fontWeight: 700,
+              fontSize: 20,
+            }}
+          >
+            Enter your Badge Number
+          </h2>
+          <input
+            type="text"
+            placeholder="Badge Number"
+            value={badgeInput}
+            onChange={e => setBadgeInput(e.target.value)}
+            style={{
+              padding: 12,
+              fontSize: 18,
+              borderRadius: 8,
+              marginBottom: 16,
+              border: "1.5px solid #2563eb",
+              minWidth: 200,
+              background: "#f1f5f9",
+              color: "#222",
+              fontWeight: "bold",
+              outline: "none",
+            }}
+          />
+          <button
+            style={{
+              background: "linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)",
+              color: "#fff",
+              fontWeight: 600,
+              border: "none",
+              borderRadius: 8,
+              fontSize: 16,
+              padding: "10px 22px",
+              cursor: "pointer",
+              boxShadow: "0 2px 8px #2563eb40",
+            }}
+            onClick={() => {
+              if (badgeUsers[badgeInput.trim()]) {
+                setLoggedIn(true);
+                setUserName(badgeUsers[badgeInput.trim()]);
+                const savedBadge = localStorage.getItem("gsi_badge");
+                const savedEntries = localStorage.getItem("gsi_entries");
+                if (savedBadge === badgeInput.trim() && savedEntries) {
+                  setEntries(JSON.parse(savedEntries));
+                } else {
+                  setEntries([
+                    { ...entries[0], badge: badgeInput.trim() }
+                  ]);
+                }
+              } else {
+                alert("Badge not recognized. Please contact admin.");
+                localStorage.removeItem("gsi_entries");
+                localStorage.removeItem("gsi_badge");
+              }
+            }}
+          >
+            Enter
+          </button>
+        </div>
       </div>
-    );
-  }
+       </div>
+  );
+}
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(120deg, #011224ff 0%, #ffffffff 100%)",
-      fontFamily: "Segoe UI, Arial, sans-serif",
-      padding: 0,
-      margin: 0,
-    }}>
-      <div style={{
+<div style={{
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  background: "linear-gradient(120deg, #011224ff 0%, #ffffff 100%)",
+  fontFamily: "Segoe UI, Arial, sans-serif",
+}}>
+    <div
+      style={{
         maxWidth: 800,
         margin: "0 auto",
         padding: "40px 10px"
-      }}>
-        {/* Two Logos & Title */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 24
-        }}>
-          <img src="/ia.png" alt="Logo AI" style={{
-            width: 68, height: 68, borderRadius: "14px", boxShadow: "0 3px 10px #0002", background: "#fff"
-          }} />
-          <div style={{ textAlign: "center", flex: 1 }}>
-            <h1 style={{
-              fontWeight: 700,
-              fontSize: 32,
-              letterSpacing: 1,
-              color: "#2563eb",
-              margin: 0,
-            }}>GSI</h1>
-            {userName && (
-              <div style={{
-                textAlign: "center",
-                marginTop: 4,
-                marginBottom: 8,
-                fontSize: 18,
-                color: "#0b2148",
-                fontWeight: "bold"
-              }}>
-                {userName}
-              </div>
-            )}
-          </div>
-          <img src="/mngha.png" alt="Logo MNGHA" style={{
-            width: 68, height: 68, borderRadius: "14px", boxShadow: "0 3px 10px #0002", background: "#fff"
-          }} />
-        </div>
-        {/* Observations */}
-        {entries.map((entry, idx) => (
-          <div key={idx} style={{
-            background: "#fff",
-            borderRadius: 16,
-            boxShadow: "0 3px 10px #93c5fd44",
-            marginBottom: 24,
-            padding: 18,
-            borderLeft: "6px solid #2563eb"
-          }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
-              {/* Date Range Picker */}
-           <div style={{ marginBottom: 12, display: "flex", gap: 8, alignItems: "center" }}>
-  <div>
-    <label style={{ fontWeight: "bold", fontSize: 16, color: "#2563eb", display: "block", marginBottom: 6 }}>
-      From
-    </label>
-    <input
-      type="date"
-      value={entry.dateFrom || ""}
-      onChange={e => updateEntry(idx, "dateFrom", e.target.value)}
-      style={inputStyle}
-    />
-  </div>
-  <div>
-    <label style={{ fontWeight: "bold", fontSize: 16, color: "#2563eb", display: "block", marginBottom: 6 }}>
-      To
-    </label>
-    <input
-      type="date"
-      value={entry.dateTo || ""}
-      onChange={e => updateEntry(idx, "dateTo", e.target.value)}
-      style={inputStyle}
-    />
-  </div>
-</div>
-
-              {/* باقي الحقول... */}
-         <div className="flex gap-4 location-fields">
-  <div>
-    <label
-      htmlFor={`main-location-${idx}`}
+      }}
+    >
+        
+         {/* Two Logos & Title */}
+<div style={{
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center", // عشان الاسم تحت الصورة ومرتب
+  gap: 4,                // مسافة صغيرة بين الصورة والاسم
+}}>
+  <img
+    src="/gsi.png"
+    alt="Logo AI"
+    style={{
+      width: 50,
+      height: 50,
+      borderRadius: 12,
+      objectFit: "contain",
+    }}
+  />
+  {userName && (
+    <div
       style={{
+        fontSize: 14,
+        color: "#000000ff",
         fontWeight: "bold",
-        fontSize: 16,
-        color: "#2563eb",
-        display: "block",
-        marginBottom: 6,
+        marginTop: 4,
       }}
     >
-      Location
-    </label>
-    <select
-      id={`main-location-${idx}`}
-      value={entry.mainLocation || ""}
-      onChange={e => {
-        updateEntry(idx, "mainLocation", e.target.value);
-        updateEntry(idx, "sideLocation", "");
-        if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
-          updateEntry(idx, "location", e.target.value);
-        } else {
-          updateEntry(idx, "location", "");
-        }
-      }}
-      style={{ ...inputStyle, minWidth: 180 }}
-    >
-      <option value="">Select Location</option>
-      {Object.keys(LOCATIONS).map(main => (
-        <option key={main} value={main}>{main}</option>
-      ))}
-    </select>
-  </div>
-  {LOCATIONS[entry.mainLocation] && LOCATIONS[entry.mainLocation].length > 0 && (
-    <div>
-      <label
-        htmlFor={`side-location-${idx}`}
-        style={{
-          fontWeight: "bold",
-          fontSize: 16,
-          color: "#2563eb",
-          display: "block",
-          marginBottom: 6,
-        }}
-      >
-        Assigned Inspection Location
-      </label>
-      <select
-        id={`side-location-${idx}`}
-        value={entry.sideLocation || ""}
-        onChange={e => {
-          updateEntry(idx, "sideLocation", e.target.value);
-          updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
-        }}
-        style={{ ...inputStyle, minWidth: 200 }}
-      >
-        <option value="">Select Assigned Inspection Location</option>
-        {LOCATIONS[entry.mainLocation].map(side => (
-          <option key={side} value={side}>{side}</option>
-        ))}
-      </select>
+      <span style={{ color: "#000000ff", fontWeight: "bold" }}>Welcome, </span>
+      <span>{userName}</span>
     </div>
   )}
+    
+  
+        {/* وسط: عنوان + اسم المستخدم */}
+ <div style={{ flex: 1, textAlign: "center", alignSelf: "center" }}>
+
+<div style={{
+  display: "flex",
+  gap: 12,
+  flexWrap: "wrap",
+  justifyContent: "center",
+  marginTop: 16,
+}}>
+
+  {/* زر الإكسل */}
+  <button
+    style={{
+      background: "linear-gradient(90deg, #21c65e 0%, #34d399 100%)",
+      color: "#fff",
+      border: "none",
+      borderRadius: 8,
+      padding: "6px 6px",
+      fontWeight: "bold",
+      fontSize: 12,
+      cursor: "pointer",
+      boxShadow: "0 2px 6px #21c65e66",
+    }}
+    onClick={() =>
+      window.open(
+        "https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s",
+        "_blank"
+      )
+    }
+  >
+    Open Excel Sheet
+  </button>
+
+  {/* زر Last Reports */}
+  <button
+  style={lastReportsBtnStyle}
+  onClick={() => setShowLastReportsPopup(true)}
+>
+  Last Reports
+</button>
+
+{showLastReportsPopup && (
+  <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
+)}
+
+  {/* زر Reload */}
+  <button
+    onClick={() => window.location.reload()}
+    style={{
+      background: "#e11d48",
+      color: "#fff",
+      border: "none",
+      borderRadius: 8,
+      padding: "6px 6px",
+      fontWeight: "bold",
+      fontSize: 12,
+      cursor: "pointer",
+      boxShadow: "0 2px 6px #e11d4844",
+    }}
+  >
+    Reload
+  </button>
 </div>
-              {/* Exact Location */}
-              <div style={{ marginBottom: 12 }}>
-                <label
-                  htmlFor={`exact-location-${idx}`}
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    color: "#2563eb",
-                    display: "block",
-                    marginBottom: 6,
-                  }}
-                >
-                  Exact Location
-                </label>
-                <input
-                  id={`exact-location-${idx}`}
-                  placeholder="Enter the exact location (e.g., Room 101, Main Hall, etc.)"
-                  value={entry.exactLocation || ""}
-                  onChange={e => updateEntry(idx, "exactLocation", e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              {/* Status */}
-              <div style={{ marginBottom: 12 }}>
-                <label
-                  htmlFor={`status-${idx}`}
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    color: "#2563eb",
-                    display: "block",
-                    marginBottom: 6,
-                  }}
-                >
-                  Status
-                </label>
-                <select
-                  id={`status-${idx}`}
-                  value={entry.status}
-                  onChange={e => updateEntry(idx, "status", e.target.value)}
-                  style={{ ...inputStyle, minWidth: 140 }}
-                >
-                  <option value="" disabled>Select status</option>
-                  <option value="Rectified">Rectified</option>
-                  <option value="Previously reported / Not Rectified">Previously reported / Not Rectified</option>
-                  <option value="New">New</option>
-                </select>
-              </div>
-              {/* Risk / Priority */}
-              <div style={{ marginBottom: 12 }}>
-                <label
-                  htmlFor={`risk-${idx}`}
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    color: "#2563eb",
-                    display: "block",
-                    marginBottom: 6,
-                  }}
-                >
-                  Risk / Priority
-                </label>
-                <select
-                  id={`risk-${idx}`}
-                  value={entry.risk}
-                  onChange={e => updateEntry(idx, "risk", e.target.value)}
-                  style={{ ...inputStyle, minWidth: 140 }}
-                >
-                  <option value="">Risk/Priority</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-              </div>
-              {/* Description of Observation */}
-              <div style={{ marginBottom: 12 }}>
-                <label
-                  htmlFor={`findings-${idx}`}
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    color: "#2563eb",
-                    display: "block",
-                    marginBottom: 5,
-                  }}
-                >
-                  Description of Observation
-                </label>
-                <textarea
-                  id={`findings-${idx}`}
-                  placeholder="Enter The Description of The Observation"
-                  value={entry.findings}
-                  onChange={e => updateEntry(idx, "findings", e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    width: "100%",
-                    minHeight: 44,
-                    resize: "vertical",
-                    marginBottom: 12,
-                  }}
-                />
-              </div>
-              {/* Attach Photos */}
-              <div style={{ marginBottom: 12 }}>
-                <label
-                  htmlFor={`image-upload-${idx}`}
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    color: "#2563eb",
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  Attach Photos (2 Max)
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-                  <input
-                    id={`image-upload-${idx}`}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={e => updateImages(idx, e.target.files)}
-                    disabled={entry.images && entry.images.length >= 2}
-                    style={{ marginBottom: 0 }}
-                  />
-                </div>
-              </div>
-              {/* Classification */}
-              <label htmlFor={`classification-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16, marginLeft: 2 }}>Classification:</label>
-              <select
-                id={`classification-${idx}`}
-                value={entry.classification}
-                onChange={e => updateEntry(idx, "classification", e.target.value)}
-                style={{ ...inputStyle, width: 150, fontWeight: "bold" }}
-              >
-                <option value="">Classification</option>
-                <option value="Building Structures and Appearance">Building Structures and Appearance</option>
-                <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">Facility Maintenance (e.g., Electrical plumbing drainage issue)</option>
-                <option value="Safety & Security measures in internal and external areas">Safety & Security measures in internal and external areas</option>
-                <option value="Support Services (e.g., Environmental /Housekeeping)">Support Services (e.g., Environmental /Housekeeping)</option>
-                <option value="Availability, Attitude and attentiveness of service providers">Availability, Attitude and attentiveness of service providers</option>
-                <option value="Concerns raised by staff at any inspected location">Concerns raised by staff at any inspected location</option>
-                <option value="Unsolved patients Issues during the time of inspection">Unsolved patients Issues during the time of inspection</option>
-                <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">Policy Compliance (general policies such as non-smoking and dress code-wearing badges)</option>
-                <option value="Space utilization">Space utilization</option>
-                <option value="property condition">property condition</option>
-                <option value="any other Operational deficiencies/ Obstacles">any other Operational deficiencies/ Obstacles</option>
-              </select>
-              {/* Badge Number */}
-              <div style={{ margin: "10px 0 0 0", display: "flex", alignItems: "center", gap: 10 }}>
-                <label htmlFor={`badge-${idx}`} style={{ fontWeight: "bold", color: "#2563eb", fontSize: 16 }}>Badge Number:</label>
-                <input
-                  id={`badge-${idx}`}
-                  type="number"
-                  min="1"
-                  placeholder="Badge number"
-                  value={entry.badge}
-                  onChange={e => updateEntry(idx, "badge", e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    width: 110,
-                    fontWeight: "bold"
-                  }}
-                />
-              </div>
-              {/* Images Preview */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 10 }}>
-                {entry.images && entry.images.map((img, i) => (
-                  <div key={i} style={{
-                    position: "relative",
-                    border: "1px solid #e0e7ef",
-                    borderRadius: 9,
-                    overflow: "hidden"
-                  }}>
-                    <img src={URL.createObjectURL(img)} alt="" width={64} height={48} style={{ objectFit: "cover" }} />
-                    <button onClick={() => removeImage(idx, i)} style={removeBtnStyle}>×</button>
-                  </div>
-                ))}
-              </div>
-            </div>
+
+
+
           </div>
-        ))}
+          
+        </div>
+        {/* Observations */}
+    {entries.map((entry, idx) => (
+  <div
+    key={idx}
+    style={{
+      background: "#fff",
+      borderRadius: 16,
+      boxShadow: "0 3px 10px #93c5fd44",
+      marginBottom: 24,
+      padding: 18,
+      borderLeft: "6px solid #2563eb",
+      position: "relative",
+      maxWidth: 900,
+      marginInline: "auto",
+    }}
+  >
+    {/* زر الحذف */}
+    <button
+      onClick={() => handleDelete(idx)}
+      style={{
+        position: "absolute",
+        top: 10,
+        right: 10,
+        background: "transparent",
+        border: "none",
+        color: "#e11d48",
+        fontSize: 24,
+        cursor: "pointer",
+      }}
+      aria-label={`Delete observation ${idx + 1}`}
+    >
+      &times;
+    </button>
+
+    {/* السطر الأول */}
+    <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
+      <div style={{ flex: "1 1 150px" }}>
+        <label style={labelStyle}>From</label>
+        <input
+          type="date"
+          value={entry.dateFrom || ""}
+          onChange={(e) => updateEntry(idx, "dateFrom", e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+      <div style={{ flex: "1 1 150px" }}>
+        <label style={labelStyle}>To</label>
+        <input
+          type="date"
+          value={entry.dateTo || ""}
+          onChange={(e) => updateEntry(idx, "dateTo", e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+      <div style={{ flex: "2 1 220px" }}>
+        <label style={labelStyle}>Location</label>
+        <select
+          id={`main-location-${idx}`}
+          value={entry.mainLocation || ""}
+          onChange={(e) => {
+            updateEntry(idx, "mainLocation", e.target.value);
+            updateEntry(idx, "sideLocation", "");
+            if (!LOCATIONS[e.target.value] || LOCATIONS[e.target.value].length === 0) {
+              updateEntry(idx, "location", e.target.value);
+            } else {
+              updateEntry(idx, "location", "");
+            }
+          }}
+          style={inputStyle}
+        >
+          <option value="">Select Location</option>
+          {Object.keys(LOCATIONS).map((main) => (
+            <option key={main} value={main}>
+              {main}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div style={{ flex: "2 1 220px" }}>
+        <label style={labelStyle}>Assigned Inspection Location</label>
+        <select
+          id={`side-location-${idx}`}
+          value={entry.sideLocation || ""}
+          onChange={(e) => {
+            updateEntry(idx, "sideLocation", e.target.value);
+            updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
+          }}
+          style={inputStyle}
+        >
+          <option value="">Select Assigned Inspection Location</option>
+          {entry.mainLocation && LOCATIONS[entry.mainLocation]
+            ? LOCATIONS[entry.mainLocation].map((side) => (
+                <option key={side} value={side}>
+                  {side}
+                </option>
+              ))
+            : null}
+        </select>
+      </div>
+    </div>
+
+    {/* السطر الثاني */}
+<div style={{ flex: "4 1 600px" }}>  {/* زودت flex عشان يكون عرضه أكبر */}
+  <label style={labelStyle}>Exact Location</label>
+  <input
+    id={`exact-location-${idx}`}
+    placeholder="Enter the exact location (Ward 11, Room #101,etc)"
+    value={entry.exactLocation || ""}
+    onChange={(e) => updateEntry(idx, "exactLocation", e.target.value)}
+    style={{ ...inputStyle, width: "98%" }}  // عشان ياخذ كل عرض الـ div
+  />
+      
+<div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+  <div style={{ flex: "1 1 150px" }}>
+    <label style={labelStyle}>Status</label>
+ <select
+  id={`status-${idx}`}
+  value={entry.status}
+  onChange={(e) => updateEntry(idx, "status", e.target.value)}
+  style={{ ...inputStyle, width: "300px" }}
+>
+      <option value="" disabled>
+        Select status
+      </option>
+      <option value="Rectified">Rectified</option>
+      <option value="Previously reported / Not Rectified">
+        Previously reported / Not Rectified
+      </option>
+      <option value="New">New</option>
+    </select>
+  </div>
+  <div style={{ flex: "1 1 150px" }}>
+    <label style={labelStyle}>Risk / Priority</label>
+<select
+  id={`status-${idx}`}
+  value={entry.status}
+  onChange={(e) => updateEntry(idx, "status", e.target.value)}
+  style={{ ...inputStyle, width: "300px" }}
+>
+
+      <option value="">Risk/Priority</option>
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+  </div>
+  </div>
+  </div>
+
+    {/* السطر الثالث */}
+    <div
+      style={{
+        display: "flex",
+        gap: 16,
+        flexWrap: "wrap",
+        alignItems: "flex-end",
+        marginBottom: 12,
+      }}
+    >
+      <div style={{ flex: "3 1 400px" }}>
+      <label style={labelStyle}>Description of Observation</label>
+<textarea
+  id={`findings-${idx}`}
+  placeholder="Enter The Description of The Observation"
+  value={entry.findings}
+  onChange={(e) => updateEntry(idx, "findings", e.target.value)}
+  style={{ ...inputStyle, width: "98%", minHeight: 80, resize: "vertical" }}
+/>
+
+      </div>
+      <div style={{ flex: "1 1 180px" }}>
+        <label style={{ ...labelStyle, textAlign: "center", marginBottom: 4 }}>Attach Photos (2 Max)</label>
+        <input
+          id={`image-upload-${idx}`}
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={(e) => updateImages(idx, e.target.files)}
+          disabled={entry.images && entry.images.length >= 2}
+          style={{ marginBottom: 0 }}
+        />
+      </div>
+      <div style={{ flex: "1 1 180px" }}>
+        <label style={labelStyle}>Classification</label>
+        <select
+  id={`classification-${idx}`}
+  value={entry.classification}
+  onChange={(e) => updateEntry(idx, "classification", e.target.value)}
+  style={{ ...inputStyle, width: "700px" }}
+>
+          <option value="">Classification</option>
+          <option value="Building Structures and Appearance">Building Structures and Appearance</option>
+          <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">
+            Facility Maintenance (e.g., Electrical plumbing drainage issue)
+          </option>
+          <option value="Safety & Security measures in internal and external areas">
+            Safety & Security measures in internal and external areas
+          </option>
+          <option value="Support Services (e.g., Environmental /Housekeeping)">
+            Support Services (e.g., Environmental /Housekeeping)
+          </option>
+          <option value="Availability, Attitude and attentiveness of service providers">
+            Availability, Attitude and attentiveness of service providers
+          </option>
+          <option value="Concerns raised by staff at any inspected location">
+            Concerns raised by staff at any inspected location
+          </option>
+          <option value="Unsolved patients Issues during the time of inspection">
+            Unsolved patients Issues during the time of inspection
+          </option>
+          <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">
+            Policy Compliance (general policies such as non-smoking and dress code-wearing badges)
+          </option>
+          <option value="Space utilization">Space utilization</option>
+          <option value="property condition">property condition</option>
+          <option value="any other Operational deficiencies/ Obstacles">
+            any other Operational deficiencies/ Obstacles
+          </option>
+        </select>
+      </div>
+    </div>
+
+    {/* السطر الرابع */}
+    <div style={{ marginTop: 12, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+      <div style={{ flex: "1 1 200px" }}>
+        <label htmlFor={`badge-${idx}`} style={labelStyle}>
+          Badge Number:
+        </label>
+        <input
+          id={`badge-${idx}`}
+          type="number"
+          min="1"
+          placeholder="Badge number"
+          value={entry.badge}
+          onChange={(e) => updateEntry(idx, "badge", e.target.value)}
+          style={{ ...inputStyle, fontWeight: "bold" , width: "80px" }}
+        />
+      </div>
+
+      {/* صور المعاينة */}
+      <div style={{ display: "flex", gap: 9, flexWrap: "wrap", flex: "2 1 400px" }}>
+  {entry.images && entry.images.map((img, i) => {
+    // تأكد إن img موجود ومن النوع الصحيح
+    if (!img || !(img instanceof Blob)) return null;
+    return (
+      <div
+        key={i}
+        style={{
+          position: "relative",
+          border: "1px solid #e0e7ef",
+          borderRadius: 9,
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={URL.createObjectURL(img)}
+          alt=""
+          width={64}
+          height={48}
+          style={{ objectFit: "cover" }}
+        />
+        <button
+          onClick={() => removeImage(idx, i)}
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            background: "rgba(255, 0, 0, 0.8)",
+            border: "none",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            borderRadius: "0 9px 0 9px",
+            width: 24,
+            height: 24,
+            lineHeight: "22px",
+            textAlign: "center",
+            padding: 0,
+          }}
+          aria-label={`Remove image ${i + 1}`}
+        >
+          ×
+        </button>
+      </div>
+    );
+  })}
+</div>
+
+    </div>
+  </div>
+))}
+
         {/* الأزرار */}
         <div style={{ display: "flex", gap: 13, justifyContent: "center", marginTop: 15, flexWrap: "wrap" }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
           <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word</button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
-          <button style={mainBtnStyle} onClick={saveForLater}>Save for later</button>
+          <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save)</button>
         </div>
         {/* Popup الإحصائيات */}
         {showStats && (
           <StatisticsPopup onClose={() => setShowStats(false)} />
         )}
       </div>
-      {/* زر فتح شيت الإكسل باللون الأخضر تحت الأزرار */}
-    {/* زرّ Excel & Last Reports */}
-    
-    <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', gap: 12, justifyContent: 'center' }}>
- <button style={excelBtnStyle} onClick={() => window.open(excelUrl, '_blank')}>
-  Open Excel Sheet
-</button>
-<button
-  style={lastReportsBtnStyle}
-  onClick={() => {
-    console.log("Last Reports clicked");
-    setShowLastReportsPopup(true);
-  }}
->
-  Last Reports
-</button>
-    </div>
-    {/* … النموذج وأزرار أخرى … */}
 
-    {/* هنا الـ popup */}
-    {showLastReportsPopup && (
-      <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
-      
-    )}
-{showStatsPopup && (
-  <StatisticsPopup onClose={() => setShowStatsPopup(false)} />
-)}
+
     </div>
   );
 }
@@ -1140,7 +1388,7 @@ function StatisticsPopup({ onClose }) {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, "GSI_Areas_Statistics.docx");
   };
-const [showLastReports, setShowLastReports] = useState(false);
+
 
   return (
     <div style={statsPopupStyle}>

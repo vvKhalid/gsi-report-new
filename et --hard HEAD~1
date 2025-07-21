@@ -1,0 +1,300 @@
+[33mcommit 014a659001cceb432f50cf8be8afdcabda2251f1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Mon Jul 21 01:25:35 2025 +0300
+
+    Your commit message
+
+[33mcommit 43d9e98ef2da03d73c255ef94c3c09e80db168da[m
+Merge: 06e5ef7 d003c0e
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Sat Jul 19 20:07:48 2025 +0300
+
+    Merge branch 'main' of https://github.com/vvKhalid/gsi-report-new
+
+[33mcommit 06e5ef74b027bdf4e8e3b49f4dfdf123fe96cd54[m
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Sat Jul 19 20:07:38 2025 +0300
+
+    Update GSI page and global styles
+
+[33mcommit d003c0e705816f4e5371d06c9b4aca9189001533[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Sat Jul 19 20:04:08 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 6118b5c21b60b7f863911ae337f07e642184aa98[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Sat Jul 19 04:04:51 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 691ed6e7ebf1dc671ab6b3dc99b9258f82a24058[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Sat Jul 19 03:49:51 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 73b28987959ac3450003622350d2d2cfe5dc3a8d[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Sat Jul 19 03:44:25 2025 +0300
+
+    Update globals.css
+
+[33mcommit d88aca838631f417a380485ac9884dd25e5ae1d8[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Sat Jul 19 03:34:47 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 075e65973c4a83207e74fbdff6d260f7a189a545[m
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Sat Jul 19 03:17:14 2025 +0300
+
+    fix: resolved merge conflict
+
+[33mcommit fad9904c22e646232db91cff3615507c9cdb2948[m
+Merge: ec95c59 830597e
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Sat Jul 19 03:08:44 2025 +0300
+
+    fix: resolved merge conflict
+
+[33mcommit ec95c593adda4263b02964116e02786de700b5e0[m
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Sat Jul 19 03:04:00 2025 +0300
+
+    Change Last Reports button color to blue-turquoise gradient
+
+[33mcommit 830597e10c0b788953b4e9a3689954ca2e700419[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 21:24:33 2025 +0300
+
+    Update page.jsx
+
+[33mcommit a9b045a351863b2f27706e52546c1a88f87cf308[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 21:05:45 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 38c4daa033c1e2975e3ac082d6952f0dbf75fc21[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 20:59:46 2025 +0300
+
+    Update page.jsx
+
+[33mcommit e7e119d8bef7008d691353e3d5abdf54e6ce864d[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 18:55:04 2025 +0300
+
+    Update page.jsx
+
+[33mcommit cb08e2662c99a5c17d96e0295e64f2676ea90432[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 18:49:08 2025 +0300
+
+    Update page.jsx
+
+[33mcommit a1ff193d43de5dca93517b49dfeab2d0d520d36d[m
+Merge: c552f96 39cf0ca
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Fri Jul 18 18:17:13 2025 +0300
+
+    test
+    terge branch 'main' of https://github.com/vvKhalid/gsi-report-new
+    
+    ss
+
+[33mcommit c552f96cb3116abd3487457025793bcdc08a546c[m
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Fri Jul 18 18:14:29 2025 +0300
+
+    وصف التحديث، مثلاً: fix date picker bug
+
+[33mcommit 39cf0ca8047952ad519b39728d22a6973decb5c8[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 18:11:53 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 1cdc10011c4152f98d89bd4550020a737717534e[m
+Merge: 6d35129 bb92a68
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Fri Jul 18 00:23:35 2025 +0300
+
+    Merge branch 'main' of https://github.com/vvKhalid/gsi-report-new
+    t push
+    git push
+    
+    '
+
+[33mcommit 6d35129a11650620ed05ec4c8d4715a49e80251c[m
+Author: vvKhalid <khalid.rzzh2@email.com>
+Date:   Fri Jul 18 00:21:49 2025 +0300
+
+    first commit
+
+[33mcommit bb92a68d5eccc1d33c43ab81ce9bb120a1409296[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Fri Jul 18 00:18:40 2025 +0300
+
+    Update page.jsx
+
+[33mcommit cf89c2c97fa56f8908d1d1aadb3eec76bbb2d225[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Thu Jul 17 21:45:54 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 2cfbd62b5ad6bc52af837bd709396b6fd8d14d4f[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Thu Jul 17 21:35:18 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 2f076d81456a9ca7738983584488393354f68b1b[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Thu Jul 17 00:29:38 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 5ae76328c67eb901cde386e2056ab28499839e4b[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Wed Jul 16 23:59:31 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 6c9b49c2f39858b4b649a52f44460ea23a63e275[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Wed Jul 16 23:10:58 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 20effe66498eb0f1c6b7c069a790beaa4e0ca481[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Wed Jul 16 23:07:16 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 32d7ac0f5d358537da98b733ac0650e99a1fa775[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:44:56 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 7d1b706b9874327eef15abef399c64d3fe9cde43[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:41:23 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 86f3f09f59ca17cb36f874c1f0ed0f0c37805397[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:35:38 2025 +0300
+
+    Update page.jsx
+
+[33mcommit b4f26ef2105bb23b1820d6b5089d68217a9fa0ec[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:29:28 2025 +0300
+
+    Update page.jsx
+
+[33mcommit f4aced37a217fe525f4962cae26523ca5ad90d33[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:22:25 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 9ee842489cac0a3cb1987903d478093f2944b8af[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:19:08 2025 +0300
+
+    Update page.jsx
+
+[33mcommit df264da5811b1f1334b774fe3c746be8bbcf1bdf[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:15:10 2025 +0300
+
+    Update page.jsx
+
+[33mcommit f5c0975f9ce4ed7dba3caf08bcdf8479a2448f12[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:09:55 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 143c58d44afafffd769ec086600850398c57966f[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 22:00:16 2025 +0300
+
+    Update page.jsx
+
+[33mcommit a621a4a4e8f3d2302fd402f5c87262edbfd6d318[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 21:53:42 2025 +0300
+
+    Update page.jsx
+
+[33mcommit cd80ae0d8145bc6a606d2e7ecfee8aa7608638a2[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 21:46:05 2025 +0300
+
+    Update page.jsx
+
+[33mcommit a8f674d14f089221c955bccbfc0d9851c40a6539[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 21:42:17 2025 +0300
+
+    Update page.jsx
+
+[33mcommit ecc3f9a3348ffd73c7349a1b8c187e783f1840fc[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 21:08:29 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 315921cbe5e7c096f971f2c1d1f85b832b8d73e4[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 20:37:46 2025 +0300
+
+    Update page.jsx
+
+[33mcommit d47f613664481e8ec76ec71a6ae7452dae37e242[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 20:33:09 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 421b09bb3cc124d8096a1a069545fb271d03833e[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 20:10:27 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 516b2f5272436e7f264849ad7402918891d91432[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 19:57:59 2025 +0300
+
+    Update page.jsx
+
+[33mcommit 5382aba271b1c8f0c43c23682988119928222dfb[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Tue Jul 15 19:43:09 2025 +0300
+
+    Update page.jsx
+
+[33mcommit a2fb7fc1f5534523b86737014e3f1747e8c4a532[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Mon Jul 14 23:27:41 2025 +0300
+
+    Update page.jsx
+
+[33mcommit d711b3435f0ef00be82646f793719420b44ec493[m
+Author: vvKhalid <khalid.rzzh2@gmail.com>
+Date:   Mon Jul 14 23:00:08 2025 +0300
+
+    Update page.jsx
+
+[33mcomm
