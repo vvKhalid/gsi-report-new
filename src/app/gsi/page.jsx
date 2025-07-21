@@ -282,38 +282,49 @@ export default function GSIReport() {
       dateTo: ""
     }  
   ]);
-const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
-const [showStatsPopup, setShowStatsPopup] = useState(false); // إذا عندك popup ثاني للإحصائيات
-const [observations, setObservations] = useState([]);
-const handleDelete = (indexToDelete) => {
-  setEntries((prevEntries) => prevEntries.filter((_, idx) => idx !== indexToDelete));
+  const [isMobile, setIsMobile] = useState(false);
+  const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
+  const [showStatsPopup, setShowStatsPopup] = useState(false);
+  const [observations, setObservations] = useState([]);
 
-};
+  // دالة حذف عنصر من الملاحظات
+  const handleDelete = (indexToDelete) => {
+    setEntries((prevEntries) => prevEntries.filter((_, idx) => idx !== indexToDelete));
+  };
+
+  // مراقبة حجم الشاشة لتحديد هل الجهاز موبايل أم لا
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 600); // شاشة أصغر من 600px تعتبر موبايل
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   function formatRangeForTable(from, to) {
-  if (!from || !to) return "";
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
+    if (!from || !to) return "";
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
 
-  const dayFrom = fromDate.getDate();
-  const dayTo = toDate.getDate();
-  const month = fromDate.toLocaleString("default", { month: "long" });
-  const year = fromDate.getFullYear();
+    const dayFrom = fromDate.getDate();
+    const dayTo = toDate.getDate();
+    const month = fromDate.toLocaleString("default", { month: "long" });
+    const year = fromDate.getFullYear();
 
-  if (
-    fromDate.getMonth() === toDate.getMonth() &&
-    fromDate.getFullYear() === toDate.getFullYear()
-  ) {
-    // مثال: 17 to 18 \n July-2025
-    return `${dayFrom} to ${dayTo}\n${month}-${year}`;
-  } else {
-    // مختلفين للاحتياط (نادر يصير)
-    const monthTo = toDate.toLocaleString("default", { month: "long" });
-    const yearTo = toDate.getFullYear();
-    return `${dayFrom} of ${month} - ${year}\nto\n${dayTo} of ${monthTo} - ${yearTo}`;
+    if (
+      fromDate.getMonth() === toDate.getMonth() &&
+      fromDate.getFullYear() === toDate.getFullYear()
+    ) {
+      // مثال: 17 to 18 \n July-2025
+      return `${dayFrom} to ${dayTo}\n${month}-${year}`;
+    } else {
+      // مختلفين للاحتياط (نادر يصير)
+      const monthTo = toDate.toLocaleString("default", { month: "long" });
+      const yearTo = toDate.getFullYear();
+      return `${dayFrom} of ${month} - ${year}\nto\n${dayTo} of ${monthTo} - ${yearTo}`;
+    }
   }
-}
-  
   // state لمتابعة أي Date Picker مفتوح
   const [openDateIdx, setOpenDateIdx] = useState(null);
 
@@ -373,7 +384,6 @@ const saveForLater = async () => {
       }
     ]);
   };
-  const [isMobile, setIsMobile] = useState(false);
 
   // تحديث بيانات الحقول
   const updateEntry = (index, field, value) => {
@@ -753,8 +763,8 @@ alert("Word file created. Saved data has been deleted.");
             src="/mngha.png" // عدل المسار حسب صورتك
             alt="mngha"
             style={{
-              width: 54,
-              height: 54,
+              width: 150,
+              height: 100,
               objectFit: "contain",
             }}
           />
@@ -765,6 +775,19 @@ alert("Word file created. Saved data has been deleted.");
             lineHeight: 1.12,
             minWidth: 180,
           }}>
+            <div
+  style={{
+    width: "100%",
+    padding: "34px 46px 0 46px",
+    boxSizing: "border-box",
+    position: "relative",
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    justifyContent: "space-between",
+    alignItems: isMobile ? "center" : "flex-start",
+    gap: isMobile ? 20 : 0,
+  }}
+></div>
             <span style={{
               color: "#ffffffff",
               fontWeight: 700,
@@ -787,6 +810,19 @@ alert("Word file created. Saved data has been deleted.");
         </div>
         {/* يمين: عناوين التدقيق */}
         <div style={{ textAlign: "right" }}>
+          <div
+  style={{
+    width: "100%",
+    padding: "34px 46px 0 46px",
+    boxSizing: "border-box",
+    position: "relative",
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    justifyContent: "space-between",
+    alignItems: isMobile ? "center" : "flex-start",
+    gap: isMobile ? 20 : 0,
+  }}
+></div>
           <div style={{ color: "#ffffffff", fontWeight: 700, fontSize: 21, marginBottom: 2 }}>
             Internal Audit
           </div>
@@ -893,16 +929,19 @@ alert("Word file created. Saved data has been deleted.");
   minHeight: "100vh",
   display: "flex",
   flexDirection: "column",
-  background: "linear-gradient(120deg, #011224ff 0%, #ffffff 100%)",
+  background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+  backgroundSize: "cover",       // تغطي الخلفية كامل المساحة
+  backgroundRepeat: "no-repeat", // تمنع التكرار
+  backgroundPosition: "center",  // تمركز الخلفية
   fontFamily: "Segoe UI, Arial, sans-serif",
 }}>
-    <div
-      style={{
-        maxWidth: 800,
-        margin: "0 auto",
-        padding: "40px 10px"
-      }}
-    >
+  <div
+    style={{
+      maxWidth: 800,
+      margin: "0 auto",
+      padding: "40px 10px"
+    }}
+  >
         
          {/* Two Logos & Title */}
 <div style={{
