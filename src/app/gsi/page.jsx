@@ -735,22 +735,21 @@ alert("Word file created. Saved data has been deleted.");
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
-    return (
-      <div
-        style={{
-          width: "100vw",
-          minHeight: "100vh",
-          background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-          display: "flex",
-          flexDirection: "column",
-          boxSizing: "border-box",
-          padding: "34px 46px 0 46px",
-          fontFamily: "Segoe UI, Arial, sans-serif",
-        }}
-      >
+  return (
+   <div
+  style={{
+    position: "fixed", // أو "absolute"
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center",
+    zIndex: -1,
+  }}
+    >
       {/* الهيدر */}
       <div
         style={{
@@ -930,21 +929,21 @@ alert("Word file created. Saved data has been deleted.");
   );
 }
 
-return (
-  <div
-    style={{
-      width: "100vw",
-      minHeight: "100vh",
-      background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
-      backgroundSize: "cover",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center",
-      boxSizing: "border-box",
-      padding: "34px 46px 0 46px",
-      fontFamily: "Segoe UI, Arial, sans-serif",
-    }}
-  >
-
+  return (
+<div
+  style={{
+    position: "fixed", // أو "absolute"
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center",
+    zIndex: -1,
+  }}
+>
   <div
     style={{
       maxWidth: 800,
@@ -1060,15 +1059,16 @@ return (
   <div
     key={idx}
     style={{
-      background: "#fff",
-      borderRadius: 16,
-      boxShadow: "0 3px 10px #93c5fd44",
-      marginBottom: 24,
-      padding: 18,
-      borderLeft: "6px solid #2563eb",
-      position: "relative",
-      maxWidth: 900,
-      marginInline: "auto",
+  background: "#fff",
+  borderRadius: 16,
+  padding: window.innerWidth < 600 ? 10 : 20,
+  maxWidth: 900,
+  width: "98vw",
+  margin: "auto",
+  boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
+  borderLeft: "6px solid #2563eb",
+  marginBottom: 24,
+  position: "relative",
     }}
   >
     {/* زر الحذف */}
