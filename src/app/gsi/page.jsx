@@ -735,16 +735,22 @@ alert("Word file created. Saved data has been deleted.");
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        minWidth: "100vw",
-        background: "linear-gradient(120deg, #d3d6fd13 0%, #0414f6ff 80%, #000000ff 100%)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    return (
+      <div
+        style={{
+          width: "100vw",
+          minHeight: "100vh",
+          background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          display: "flex",
+          flexDirection: "column",
+          boxSizing: "border-box",
+          padding: "34px 46px 0 46px",
+          fontFamily: "Segoe UI, Arial, sans-serif",
+        }}
+      >
       {/* الهيدر */}
       <div
         style={{
@@ -924,17 +930,21 @@ alert("Word file created. Saved data has been deleted.");
   );
 }
 
-  return (
-<div style={{
-  minHeight: "100vh",
-  display: "flex",
-  flexDirection: "column",
-  background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
-  backgroundSize: "cover",       // تغطي الخلفية كامل المساحة
-  backgroundRepeat: "no-repeat", // تمنع التكرار
-  backgroundPosition: "center",  // تمركز الخلفية
-  fontFamily: "Segoe UI, Arial, sans-serif",
-}}>
+return (
+  <div
+    style={{
+      width: "100vw",
+      minHeight: "100vh",
+      background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+      backgroundSize: "cover",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      boxSizing: "border-box",
+      padding: "34px 46px 0 46px",
+      fontFamily: "Segoe UI, Arial, sans-serif",
+    }}
+  >
+
   <div
     style={{
       maxWidth: 800,
