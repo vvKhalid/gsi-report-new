@@ -571,16 +571,6 @@ alert("Word file created. Saved data has been deleted.");
 
 };
 
-function groupEntries(entries) {
-  const groups = {};
-  entries.forEach((entry) => {
-    const key = [
-      String(entry.mainLocation || ""),
-      String(entry.sideLocation || "")
-    ].join("__");
-    if (!groups[key]) {
-      groups[key] = { ...entry, mergedFindings: [entry.findings], mergedEntries: [entry] };
-    } else {
       groups[key].mergedFindings.push(entry.findings);
       groups[key].mergedEntries.push(entry);
     }
