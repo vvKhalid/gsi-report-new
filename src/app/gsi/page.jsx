@@ -569,11 +569,10 @@ localStorage.removeItem("gsi_entries");
 localStorage.removeItem("gsi_badge");
 alert("Word file created. Saved data has been deleted.");
 
-};
+}
 
       groups[key].mergedFindings.push(entry.findings);
       groups[key].mergedEntries.push(entry);
-    }
   });
   return Object.values(groups);
 }
