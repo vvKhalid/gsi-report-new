@@ -301,29 +301,7 @@ export default function GSIReport() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  function formatRangeForTable(from, to) {
-    if (!from || !to) return "";
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    const dayFrom = fromDate.getDate();
-    const dayTo = toDate.getDate();
-    const month = fromDate.toLocaleString("default", { month: "long" });
-    const year = fromDate.getFullYear();
-
-    if (
-      fromDate.getMonth() === toDate.getMonth() &&
-      fromDate.getFullYear() === toDate.getFullYear()
-    ) {
-      // مثال: 17 to 18 \n July-2025
-      return `${dayFrom} to ${dayTo}\n${month}-${year}`;
-    } else {
-      // مختلفين للاحتياط (نادر يصير)
-      const monthTo = toDate.toLocaleString("default", { month: "long" });
-      const yearTo = toDate.getFullYear();
-      return `${dayFrom} of ${month} - ${year}\nto\n${dayTo} of ${monthTo} - ${yearTo}`;
-    }
-  }
+ 
   // state لمتابعة أي Date Picker مفتوح
   const [openDateIdx, setOpenDateIdx] = useState(null);
 
@@ -369,7 +347,6 @@ const saveForLater = async () => {
       ...entries,
       {
         badge: last.badge || "",
-        dateFrom: last.dateFrom || "",
         date: last.date || "",
         mainLocation: last.mainLocation || "",
         sideLocation: last.sideLocation || "",
