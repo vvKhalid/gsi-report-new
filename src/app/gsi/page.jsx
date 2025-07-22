@@ -24,18 +24,18 @@ const containerStyle = {
   borderLeft: "6px solid #2563eb",
   marginBottom: 24,
   position: "relative",
-}
+};
 const flexRow = {
   display: "flex",
   gap: 16,
   flexWrap: "wrap",
   marginBottom: 16,
-}
+};
 const flexItem = {
   flexGrow: 1,
   minWidth: 150,
   maxWidth: 300,
-}
+};
 
 // ====== التنسيقات ======
 const mainBtnStyle = {
@@ -49,7 +49,7 @@ const mainBtnStyle = {
   boxShadow: "0 2px 8px #2563eb40",
   cursor: "pointer",
   transition: "background 0.2s",
-}
+};
 const inputStyle = {
   border: "1.3px solid #60a5fa",
   borderRadius: 10,
@@ -60,7 +60,7 @@ const inputStyle = {
   outline: "none",
   color: "#000",
   fontWeight: "bold",
-}
+};
 const removeBtnStyle = {
   position: "absolute",
   top: 0,
@@ -73,12 +73,12 @@ const removeBtnStyle = {
   height: 20,
   fontWeight: "bold",
   cursor: "pointer"
-}
-const cellStyle = { padding: 10, border: "1px solid #93c5fd" }
+};
+const cellStyle = { padding: 10, border: "1px solid #93c5fd" };
 const statsPopupStyle = {
   position: "fixed", zIndex: 100, top: 0, left: 0, width: "100vw", height: "100vh",
   background: "rgba(0,0,0,0.13)", display: "flex", justifyContent: "center", alignItems: "center"
-}
+};
 const statsContentStyle = {
   background: "#fff",
   borderRadius: 14,
@@ -88,7 +88,7 @@ const statsContentStyle = {
   margin: "0 auto",
   padding: 32,
   border: "1px solid #dbeafe"
-}
+};
 const excelBtnStyle = {
   background: "linear-gradient(90deg, #21c65e 0%, #34d399 100%)",
   color: "#fff",
@@ -100,7 +100,7 @@ const excelBtnStyle = {
   boxShadow: "0 2px 8px #21c65e40",
   cursor: "pointer",
   transition: "background 0.2s",
-}
+};
 
 const lastReportsBtnStyle = {
   background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
@@ -113,7 +113,7 @@ const lastReportsBtnStyle = {
   boxShadow: "0 2px 8px #6366f140",
   cursor: "pointer",
   transition: "background 0.2s",
-}
+};
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -146,7 +146,7 @@ function makeEmptyArea(name) {
     fontSize: 16,
     marginBottom: 6,
     display: "block",
-  }
+  };
 // ====== البادجات ======
 const badgeUsers = {
   "53075": "Hanan Al Shuwaier",
@@ -160,7 +160,7 @@ const badgeUsers = {
   "78879": "Khalid Al Mutairi",
   "100696": "Abdullah Al Enezi",
   "100729": "Ghozlan Alkharaan",
-}
+};
 const LOCATIONS = {
   "Hospitals": [
     "Main Hospital",
@@ -209,17 +209,14 @@ const LOCATIONS = {
     "North of Riyadh Hemodialysis Center",
     "South of Riyadh Hemodialysis Center"
   ],
-}
+};
 const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s';
 
 const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
 
 async function sendToExcel(entries) {
   const allDates = entries
-<<<<<<< HEAD
     .map(e => e.date)
-=======
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
     .filter(Boolean)
     .map(d => new Date(d))
     .sort((a, b) => a - b);
@@ -253,7 +250,7 @@ async function sendToExcel(entries) {
       Classification: e.classification,
       Status: e.status,
       "Risk / Priority": e.risk
-    }
+    };
 
     const res = await fetch(flowUrl, {
       method: 'POST',
@@ -280,10 +277,7 @@ export default function GSIReport() {
       status: "",
       risk: "",
       images: [],
-<<<<<<< HEAD
       date: ""
-=======
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
     }  
   ]);
   const [isMobile, setIsMobile] = useState(false);
@@ -294,13 +288,13 @@ export default function GSIReport() {
   // دالة حذف عنصر من الملاحظات
   const handleDelete = (indexToDelete) => {
     setEntries((prevEntries) => prevEntries.filter((_, idx) => idx !== indexToDelete));
-  }
+  };
 
   // مراقبة حجم الشاشة لتحديد هل الجهاز موبايل أم لا
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 600); // شاشة أصغر من 600px تعتبر موبايل
-    }
+    };
     window.addEventListener("resize", handleResize);
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
@@ -358,7 +352,7 @@ const saveForLater = async () => {
     const imagesBase64 = await Promise.all(
       (entry.images || []).map(fileToBase64)
     );
-    return { ...entry, images: imagesBase64 }
+    return { ...entry, images: imagesBase64 };
   }));
 
   localStorage.setItem("gsi_entries", JSON.stringify(entriesCopy));
@@ -368,16 +362,13 @@ const saveForLater = async () => {
 
   // لإضافة ملاحظة جديدة
   const addEntry = () => {
-    const last = entries[entries.length - 1] || {}
-    const first = entries[0] || {}
+    const last = entries[entries.length - 1] || {};
+    const first = entries[0] || {};
     setEntries([
       ...entries,
       {
         badge: last.badge || "",
-<<<<<<< HEAD
         date: last.date || "",
-=======
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
         mainLocation: last.mainLocation || "",
         sideLocation: last.sideLocation || "",
         location: last.location || "",
@@ -396,7 +387,7 @@ const saveForLater = async () => {
     const newEntries = [...entries];
     newEntries[index][field] = value;
     setEntries(newEntries);
-  }
+  };
 
   // تحديث الصور
   const updateImages = (index, files) => {
@@ -406,62 +397,22 @@ const saveForLater = async () => {
     const images = [...existingImages, ...selectedImages].slice(0, 2);
     newEntries[index].images = images;
     setEntries(newEntries);
-  }
+  };
 
   // حذف صورة
   const removeImage = (entryIndex, imageIndex) => {
     const newEntries = [...entries];
     newEntries[entryIndex].images.splice(imageIndex, 1);
     setEntries(newEntries);
-  }
+  };
 
   // ملف مع الصور الحقيقية
 const generateWordWithImages = async () => {
-<<<<<<< HEAD
  const formatDate = (date) => {
     if (!date) return "—";
     const d = new Date(date);
     return `${d.getDate()} ${d.toLocaleString("en-US", { month: "long" })} - ${d.getFullYear()}`;
   };
-=======
-    const month = from.toLocaleString("en-US", { month: "long" });
-    const year = from.getFullYear();
-    if (from.getTime() === to.getTime()) {
-      return `${from.getDate()} ${month} - ${year}`;
-    } else {
-      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
-    }
-  }
-
-  function getGlobalDateRange(entries) {
-    let dates = [];
-    entries.forEach(e => {
-    });
-    if (dates.length === 0) return ["", ""];
-    dates.sort((a, b) => a - b);
-    return [dates[0], dates[dates.length - 1]];
-  }
-
-    const month = from.toLocaleString("en-US", { month: "long" });
-    const year = from.getFullYear();
-    if (from.getTime() === to.getTime()) {
-      return `${from.getDate()} ${month} - ${year}`;
-    } else if (
-      from.getMonth() === to.getMonth() &&
-      from.getFullYear() === to.getFullYear()
-    ) {
-      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
-    } else {
-      // مختلفين شهر أو سنة
-      return `${from.getDate()} ${month} - ${from.getFullYear()} to ${to.getDate()} ${to.toLocaleString("en-US", { month: "long" })} - ${to.getFullYear()}`;
-    }
-  }
-
-  const [minDate, maxDate] = getGlobalDateRange(entries);
-
-  const allSameRange = entries.every(
-  );
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
 
   const tableRows = [
     new TableRow({
@@ -509,7 +460,6 @@ new TableCell({
       return new TableRow({
         children: [
           new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-<<<<<<< HEAD
  new TableCell({
   children: [
     new Paragraph({
@@ -518,17 +468,6 @@ text: formatDate(entry.date),
     }),
   ],
 }),
-=======
-          ...(!allSameRange
-            ? [new TableCell({
-                children: [
-                  new Paragraph({
-                    alignment: "center",
-                  }),
-                ],
-              })]
-            : []),
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
           new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
           new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
           new TableCell({ children: imageParagraphs }),
@@ -605,35 +544,26 @@ saveAs(blob, filename);
 localStorage.removeItem("gsi_entries");
 localStorage.removeItem("gsi_badge");
 alert("Word file created. Saved data has been deleted.");
-}
 
+};
 
-
-// ✅ الآن نبدأ دالة جديدة
-const groupEntries = (entries) => {
+function groupEntries(entries) {
   const groups = {};
-<<<<<<< HEAD
   entries.forEach((entry) => {
     const key = [
       String(entry.date || ""),
       String(entry.mainLocation || ""),
       String(entry.sideLocation || "")
     ].join("__");
-=======
-  entries.forEach(entry => {
-    const key = entry.mainLocation || "Unknown";
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
     if (!groups[key]) {
-      groups[key] = {
-        mergedFindings: [],
-        mergedEntries: []
-      };
+      groups[key] = { ...entry, mergedFindings: [entry.findings], mergedEntries: [entry] };
+    } else {
+      groups[key].mergedFindings.push(entry.findings);
+      groups[key].mergedEntries.push(entry);
     }
-    groups[key].mergedFindings.push(entry.findings);
-    groups[key].mergedEntries.push(entry);
   });
   return Object.values(groups);
-};
+}
 
 const generateWordPhotoNumbers = async () => {
   // 1️⃣ أرسل كل Entry أولاً
@@ -655,12 +585,9 @@ const generateWordPhotoNumbers = async () => {
       : `${d1.getDate()} to ${d2.getDate()} ${m} - ${y}`;
   };
   const groupEntries = arr => {
-    const map = {}
+    const map = {};
     arr.forEach(e => {
-<<<<<<< HEAD
       const key = [e.date, e.mainLocation, e.sideLocation].join('__');
-=======
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
       map[key] = map[key]||[];
       map[key].push(e);
     });
@@ -700,14 +627,11 @@ const generateWordPhotoNumbers = async () => {
         return new TableRow({
           children: [
             String(idx+1),
-<<<<<<< HEAD
             e.date ? new Date(e.date).toLocaleDateString("en-US", {
   day: "numeric",
   month: "long",
   year: "numeric"
 }) : "—",
-=======
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
             e.mainLocation||'—',
             e.sideLocation||'—',
             e.exactLocation||'',
@@ -1092,11 +1016,7 @@ style={{
   background: "#fff",
   borderRadius: 16,
   padding: "clamp(10px, 4vw, 28px)",
-<<<<<<< HEAD
   maxWidth: 800, // كافي للجوال والكمبيوتر
-=======
-  maxWidth: 500, // كافي للجوال والكمبيوتر
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
   width: "98vw",
   margin: "24px auto",
   boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
@@ -1119,13 +1039,12 @@ style={{
       }}
       aria-label={`Delete observation ${idx + 1}`}
     >
-      &times
+      &times;
     </button>
 
     {/* السطر الأول */}
     <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
       <div style={{ flex: "1 1 150px" }}>
-<<<<<<< HEAD
        <label style={labelStyle}>Date</label>
 <input
   type="date"
@@ -1134,20 +1053,6 @@ style={{
   style={inputStyle}
 />
 
-=======
-        <label style={labelStyle}>From</label>
-        <input
-          type="date"
-          style={inputStyle}
-        />
-      </div>
-      <div style={{ flex: "1 1 150px" }}>
-        <label style={labelStyle}>To</label>
-        <input
-          type="date"
-          style={inputStyle}
-        />
->>>>>>> 256e06b05becafee30bf80c60c7179b5910a34fa
       </div>
       <div style={{ flex: "2 1 220px" }}>
         <label style={labelStyle}>Location</label>
@@ -1416,7 +1321,7 @@ function StatisticsPopup({ onClose }) {
     if (!currentName.trim()) return;
     setAreas([...areas, makeEmptyArea(currentName.trim())]);
     setCurrentName("");
-  }
+  };
 
   // تحديث القيم داخل الجدول
   const updateStat = (areaIdx, typeKey, field, value) => {
