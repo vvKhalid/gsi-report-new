@@ -215,9 +215,7 @@ const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsasso
 const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
 
 async function sendToExcel(entries) {
-  // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
   const allDates = entries
-    .flatMap(e => [e.dateFrom, e.dateTo])
     .filter(Boolean)
     .map(d => new Date(d))
     .sort((a, b) => a - b);
@@ -278,8 +276,6 @@ export default function GSIReport() {
       status: "",
       risk: "",
       images: [],
-      dateFrom: "",
-      dateTo: ""
     }  
   ]);
   const [isMobile, setIsMobile] = useState(false);
@@ -370,8 +366,6 @@ const saveForLater = async () => {
       ...entries,
       {
         badge: last.badge || "",
-        dateFrom: last.dateFrom || "",
-        dateTo: last.dateTo || "",
         mainLocation: last.mainLocation || "",
         sideLocation: last.sideLocation || "",
         location: last.location || "",
@@ -411,10 +405,6 @@ const saveForLater = async () => {
 
   // ملف مع الصور الحقيقية
 const generateWordWithImages = async () => {
-  function formatRangeForTable(dateFrom, dateTo) {
-    if (!dateFrom || !dateTo) return "";
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
     const month = from.toLocaleString("en-US", { month: "long" });
     const year = from.getFullYear();
     if (from.getTime() === to.getTime()) {
@@ -427,18 +417,12 @@ const generateWordWithImages = async () => {
   function getGlobalDateRange(entries) {
     let dates = [];
     entries.forEach(e => {
-      if (e.dateFrom) dates.push(new Date(e.dateFrom));
-      if (e.dateTo) dates.push(new Date(e.dateTo));
     });
     if (dates.length === 0) return ["", ""];
     dates.sort((a, b) => a - b);
     return [dates[0], dates[dates.length - 1]];
   }
 
-  function formatRangeForHeader(dateFrom, dateTo) {
-    if (!dateFrom || !dateTo) return "";
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
     const month = from.toLocaleString("en-US", { month: "long" });
     const year = from.getFullYear();
     if (from.getTime() === to.getTime()) {
@@ -457,7 +441,6 @@ const generateWordWithImages = async () => {
   const [minDate, maxDate] = getGlobalDateRange(entries);
 
   const allSameRange = entries.every(
-    x => x.dateFrom === entries[0].dateFrom && x.dateTo === entries[0].dateTo
   );
 
   const tableRows = [
@@ -504,7 +487,6 @@ const generateWordWithImages = async () => {
             ? [new TableCell({
                 children: [
                   new Paragraph({
-                    text: formatRangeForTable(entry.dateFrom, entry.dateTo),
                     alignment: "center",
                   }),
                 ],
@@ -593,8 +575,6 @@ function groupEntries(entries) {
   const groups = {};
   entries.forEach((entry) => {
     const key = [
-      String(entry.dateFrom || ""),
-      String(entry.dateTo || ""),
       String(entry.mainLocation || ""),
       String(entry.sideLocation || "")
     ].join("__");
@@ -630,7 +610,6 @@ const generateWordPhotoNumbers = async () => {
   const groupEntries = arr => {
     const map = {};
     arr.forEach(e => {
-      const key = [e.dateFrom, e.dateTo, e.mainLocation, e.sideLocation].join('__');
       map[key] = map[key]||[];
       map[key].push(e);
     });
@@ -670,7 +649,6 @@ const generateWordPhotoNumbers = async () => {
         return new TableRow({
           children: [
             String(idx+1),
-            formatRangeForTable(e.dateFrom,e.dateTo),
             e.mainLocation||'—',
             e.sideLocation||'—',
             e.exactLocation||'',
@@ -1087,8 +1065,6 @@ style={{
         <label style={labelStyle}>From</label>
         <input
           type="date"
-          value={entry.dateFrom || ""}
-          onChange={(e) => updateEntry(idx, "dateFrom", e.target.value)}
           style={inputStyle}
         />
       </div>
@@ -1096,8 +1072,6 @@ style={{
         <label style={labelStyle}>To</label>
         <input
           type="date"
-          value={entry.dateTo || ""}
-          onChange={(e) => updateEntry(idx, "dateTo", e.target.value)}
           style={inputStyle}
         />
       </div>
