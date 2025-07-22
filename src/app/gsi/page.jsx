@@ -278,8 +278,7 @@ export default function GSIReport() {
       status: "",
       risk: "",
       images: [],
-      dateFrom: "",
-      dateTo: ""
+      date: ""
     }  
   ]);
   const [isMobile, setIsMobile] = useState(false);
@@ -371,7 +370,7 @@ const saveForLater = async () => {
       {
         badge: last.badge || "",
         dateFrom: last.dateFrom || "",
-        dateTo: last.dateTo || "",
+        date: last.date || "",
         mainLocation: last.mainLocation || "",
         sideLocation: last.sideLocation || "",
         location: last.location || "",
@@ -459,17 +458,64 @@ const generateWordWithImages = async () => {
   const allSameRange = entries.every(
     x => x.dateFrom === entries[0].dateFrom && x.dateTo === entries[0].dateTo
   );
-
-  const tableRows = [
-    new TableRow({
-      children: [
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        ...(!allSameRange
-          ? [new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] })]
-          : []),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+const tableRows = [
+  new TableRow({
+    children: [
+      new TableCell({
+        shading: { fill: "4F81BD" },
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "No.", color: "FFFFFF", bold: true })
+            ],
+            alignment: "center"
+          })
+        ]
+      }),
+      new TableCell({
+        shading: { fill: "4F81BD" },
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Date", color: "FFFFFF", bold: true })
+            ],
+            alignment: "center"
+          })
+        ]
+      }),
+      new TableCell({
+        shading: { fill: "4F81BD" },
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })
+            ],
+            alignment: "center"
+          })
+        ]
+      }),
+      new TableCell({
+        shading: { fill: "4F81BD" },
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })
+            ],
+            alignment: "center"
+          })
+        ]
+      }),
+      new TableCell({
+        shading: { fill: "4F81BD" },
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })
+            ],
+            alignment: "center"
+          })
+        ]
+      }),
       ],
     }),
     ...(await Promise.all(entries.map(async (entry, index) => {
