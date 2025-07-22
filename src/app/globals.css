@@ -55,3 +55,32 @@ html, body {
   max-width: 100%;
   overflow-x: hidden;
 }
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .header img {
+    max-width: 80px !important;
+    margin-bottom: 10px;
+  }
+
+  .header-text {
+    font-size: 18px !important;
+    line-height: 1.2;
+  }
+}
+@media (max-width: 768px) {
+  input, select, textarea, button {
+    width: 100% !important;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .form-control {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+}
