@@ -215,9 +215,8 @@ const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsasso
 const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
 
 async function sendToExcel(entries) {
-  // 1️⃣ اجمع كل التواريخ من dateFrom و dateTo
   const allDates = entries
-    .flatMap(e => [e.dateFrom, e.dateTo])
+    .map(e => e.date)
     .filter(Boolean)
     .map(d => new Date(d))
     .sort((a, b) => a - b);
@@ -278,8 +277,7 @@ export default function GSIReport() {
       status: "",
       risk: "",
       images: [],
-      dateFrom: "",
-      dateTo: ""
+      date: ""
     }  
   ]);
   const [isMobile, setIsMobile] = useState(false);
@@ -370,8 +368,7 @@ const saveForLater = async () => {
       ...entries,
       {
         badge: last.badge || "",
-        dateFrom: last.dateFrom || "",
-        dateTo: last.dateTo || "",
+        date: last.date || "",
         mainLocation: last.mainLocation || "",
         sideLocation: last.sideLocation || "",
         location: last.location || "",
@@ -411,62 +408,25 @@ const saveForLater = async () => {
 
   // ملف مع الصور الحقيقية
 const generateWordWithImages = async () => {
-  function formatRangeForTable(dateFrom, dateTo) {
-    if (!dateFrom || !dateTo) return "";
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
-    const month = from.toLocaleString("en-US", { month: "long" });
-    const year = from.getFullYear();
-    if (from.getTime() === to.getTime()) {
-      return `${from.getDate()} ${month} - ${year}`;
-    } else {
-      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
-    }
-  }
-
-  function getGlobalDateRange(entries) {
-    let dates = [];
-    entries.forEach(e => {
-      if (e.dateFrom) dates.push(new Date(e.dateFrom));
-      if (e.dateTo) dates.push(new Date(e.dateTo));
-    });
-    if (dates.length === 0) return ["", ""];
-    dates.sort((a, b) => a - b);
-    return [dates[0], dates[dates.length - 1]];
-  }
-
-  function formatRangeForHeader(dateFrom, dateTo) {
-    if (!dateFrom || !dateTo) return "";
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
-    const month = from.toLocaleString("en-US", { month: "long" });
-    const year = from.getFullYear();
-    if (from.getTime() === to.getTime()) {
-      return `${from.getDate()} ${month} - ${year}`;
-    } else if (
-      from.getMonth() === to.getMonth() &&
-      from.getFullYear() === to.getFullYear()
-    ) {
-      return `${from.getDate()} to ${to.getDate()} ${month} - ${year}`;
-    } else {
-      // مختلفين شهر أو سنة
-      return `${from.getDate()} ${month} - ${from.getFullYear()} to ${to.getDate()} ${to.toLocaleString("en-US", { month: "long" })} - ${to.getFullYear()}`;
-    }
-  }
-
-  const [minDate, maxDate] = getGlobalDateRange(entries);
-
-  const allSameRange = entries.every(
-    x => x.dateFrom === entries[0].dateFrom && x.dateTo === entries[0].dateTo
-  );
+ const formatDate = (date) => {
+    if (!date) return "—";
+    const d = new Date(date);
+    return `${d.getDate()} ${d.toLocaleString("en-US", { month: "long" })} - ${d.getFullYear()}`;
+  };
 
   const tableRows = [
     new TableRow({
       children: [
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        ...(!allSameRange
-          ? [new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date Range", color: "FFFFFF", bold: true })], alignment: "center" })] })]
-          : []),
+new TableCell({
+  shading: { fill: "4F81BD" },
+  children: [
+    new Paragraph({
+      children: [new TextRun({ text: "Date", color: "FFFFFF", bold: true })],
+      alignment: "center"
+    })
+  ]
+}),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
@@ -500,16 +460,14 @@ const generateWordWithImages = async () => {
       return new TableRow({
         children: [
           new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-          ...(!allSameRange
-            ? [new TableCell({
-                children: [
-                  new Paragraph({
-                    text: formatRangeForTable(entry.dateFrom, entry.dateTo),
-                    alignment: "center",
-                  }),
-                ],
-              })]
-            : []),
+ new TableCell({
+  children: [
+    new Paragraph({
+text: formatDate(entry.date),
+      alignment: "center",
+    }),
+  ],
+}),
           new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
           new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
           new TableCell({ children: imageParagraphs }),
@@ -536,11 +494,11 @@ const generateWordWithImages = async () => {
             alignment: "left",
             spacing: { after: 50 }, // مسافة تحت
           }),
-          // Date Range أعلى اليسار تحت Location
+          // Date  أعلى اليسار تحت Location
           new Paragraph({
             children: [
               new TextRun({
-                text: `Date Range: ${formatRangeForHeader(minDate, maxDate)}`,
+text: `Date: ${formatDate(entries[0]?.date)}`,
                 bold: true,
                 size: 26,
                 color: "2563eb",
@@ -593,8 +551,7 @@ function groupEntries(entries) {
   const groups = {};
   entries.forEach((entry) => {
     const key = [
-      String(entry.dateFrom || ""),
-      String(entry.dateTo || ""),
+      String(entry.date || ""),
       String(entry.mainLocation || ""),
       String(entry.sideLocation || "")
     ].join("__");
@@ -630,7 +587,7 @@ const generateWordPhotoNumbers = async () => {
   const groupEntries = arr => {
     const map = {};
     arr.forEach(e => {
-      const key = [e.dateFrom, e.dateTo, e.mainLocation, e.sideLocation].join('__');
+      const key = [e.date, e.mainLocation, e.sideLocation].join('__');
       map[key] = map[key]||[];
       map[key].push(e);
     });
@@ -644,7 +601,7 @@ const generateWordPhotoNumbers = async () => {
     // header
     new TableRow({
       children: [
-        'No.','Date Range','Location',
+        'No.','Date','Location',
         'Assigned Inspection Location','Exact Location',
         'Description of Observation','Attached Photo',
         'Status of Finding','Risk/Priority'
@@ -670,7 +627,11 @@ const generateWordPhotoNumbers = async () => {
         return new TableRow({
           children: [
             String(idx+1),
-            formatRangeForTable(e.dateFrom,e.dateTo),
+            e.date ? new Date(e.date).toLocaleDateString("en-US", {
+  day: "numeric",
+  month: "long",
+  year: "numeric"
+}) : "—",
             e.mainLocation||'—',
             e.sideLocation||'—',
             e.exactLocation||'',
@@ -694,7 +655,7 @@ const generateWordPhotoNumbers = async () => {
         new Paragraph(''),
         new Table({ rows: tableRows, width: { size:100, type:'pct' } }),
         new Paragraph(''),
-        new Paragraph('please see the attached inspection photos for your easy reference.'),
+        new Paragraph('Please see the attached inspection photos for your easy reference.'),
         new Paragraph('We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.'),
         new Paragraph('Thank you for your usual cooperation.'),
         new Paragraph('Best Regards.')
@@ -736,14 +697,15 @@ alert("Word file created. Saved data has been deleted.");
   // شاشة تسجيل الدخول
   if (!loggedIn) {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        minWidth: "100vw",
-        background: "linear-gradient(120deg, #d3d6fd13 0%, #0414f6ff 80%, #000000ff 100%)",
-        display: "flex",
-        flexDirection: "column",
-      }}
+<div
+  style={{
+    minHeight: "100vh",
+    width: "100%",
+    background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center",
+  }}
     >
       {/* الهيدر */}
       <div
@@ -925,16 +887,17 @@ alert("Word file created. Saved data has been deleted.");
 }
 
   return (
-<div style={{
+<div
+style={{
   minHeight: "100vh",
-  display: "flex",
-  flexDirection: "column",
+  width: "100%",
   background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
-  backgroundSize: "cover",       // تغطي الخلفية كامل المساحة
-  backgroundRepeat: "no-repeat", // تمنع التكرار
-  backgroundPosition: "center",  // تمركز الخلفية
-  fontFamily: "Segoe UI, Arial, sans-serif",
-}}>
+  backgroundSize: "cover",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+}}
+
+>
   <div
     style={{
       maxWidth: 800,
@@ -1050,15 +1013,15 @@ alert("Word file created. Saved data has been deleted.");
   <div
     key={idx}
     style={{
-      background: "#fff",
-      borderRadius: 16,
-      boxShadow: "0 3px 10px #93c5fd44",
-      marginBottom: 24,
-      padding: 18,
-      borderLeft: "6px solid #2563eb",
-      position: "relative",
-      maxWidth: 900,
-      marginInline: "auto",
+  background: "#fff",
+  borderRadius: 16,
+  padding: "clamp(10px, 4vw, 28px)",
+  maxWidth: 800, // كافي للجوال والكمبيوتر
+  width: "98vw",
+  margin: "24px auto",
+  boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
+  borderLeft: "6px solid #2563eb",
+  position: "relative",
     }}
   >
     {/* زر الحذف */}
@@ -1082,22 +1045,14 @@ alert("Word file created. Saved data has been deleted.");
     {/* السطر الأول */}
     <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
       <div style={{ flex: "1 1 150px" }}>
-        <label style={labelStyle}>From</label>
-        <input
-          type="date"
-          value={entry.dateFrom || ""}
-          onChange={(e) => updateEntry(idx, "dateFrom", e.target.value)}
-          style={inputStyle}
-        />
-      </div>
-      <div style={{ flex: "1 1 150px" }}>
-        <label style={labelStyle}>To</label>
-        <input
-          type="date"
-          value={entry.dateTo || ""}
-          onChange={(e) => updateEntry(idx, "dateTo", e.target.value)}
-          style={inputStyle}
-        />
+       <label style={labelStyle}>Date</label>
+<input
+  type="date"
+  value={entry.date}
+  onChange={e => updateEntry(idx, "date", e.target.value)}
+  style={inputStyle}
+/>
+
       </div>
       <div style={{ flex: "2 1 220px" }}>
         <label style={labelStyle}>Location</label>
@@ -1160,36 +1115,33 @@ alert("Word file created. Saved data has been deleted.");
 <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
   <div style={{ flex: "1 1 150px" }}>
     <label style={labelStyle}>Status</label>
- <select
-  id={`status-${idx}`}
-  value={entry.status}
-  onChange={(e) => updateEntry(idx, "status", e.target.value)}
-  style={{ ...inputStyle, width: "300px" }}
->
-      <option value="" disabled>
-        Select status
-      </option>
-      <option value="Rectified">Rectified</option>
-      <option value="Previously reported / Not Rectified">
-        Previously reported / Not Rectified
-      </option>
-      <option value="New">New</option>
-    </select>
-  </div>
-  <div style={{ flex: "1 1 150px" }}>
-    <label style={labelStyle}>Risk / Priority</label>
 <select
   id={`status-${idx}`}
   value={entry.status}
   onChange={(e) => updateEntry(idx, "status", e.target.value)}
   style={{ ...inputStyle, width: "300px" }}
 >
+  <option value="">Select status</option>
+  <option value="Rectified">Rectified</option>
+  <option value="Previously reported / Not Rectified">Previously reported / Not Rectified</option>
+  <option value="New">New</option>
+</select>
 
-      <option value="">Risk/Priority</option>
-      <option value="High">High</option>
-      <option value="Medium">Medium</option>
-      <option value="Low">Low</option>
-    </select>
+  </div>
+  <div style={{ flex: "1 1 150px" }}>
+    <label style={labelStyle}>Risk / Priority</label>
+<select
+  id={`risk-${idx}`}
+  value={entry.risk}
+  onChange={(e) => updateEntry(idx, "risk", e.target.value)}
+  style={{ ...inputStyle, width: "300px" }}
+>
+  <option value="">Risk/Priority</option>
+  <option value="High">High</option>
+  <option value="Medium">Medium</option>
+  <option value="Low">Low</option>
+</select>
+
   </div>
   </div>
   </div>
