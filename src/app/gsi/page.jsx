@@ -568,28 +568,26 @@ saveAs(blob, filename);
 localStorage.removeItem("gsi_entries");
 localStorage.removeItem("gsi_badge");
 alert("Word file created. Saved data has been deleted.");
-
 }
+
+
+
+// ✅ الآن نبدأ دالة جديدة
 const groupEntries = (entries) => {
   const groups = {};
-
   entries.forEach(entry => {
     const key = entry.mainLocation || "Unknown";
-
     if (!groups[key]) {
       groups[key] = {
         mergedFindings: [],
         mergedEntries: []
       };
     }
-
     groups[key].mergedFindings.push(entry.findings);
     groups[key].mergedEntries.push(entry);
   });
-
   return Object.values(groups);
 };
-
 
 const generateWordPhotoNumbers = async () => {
   // 1️⃣ أرسل كل Entry أولاً
