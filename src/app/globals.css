@@ -15,9 +15,43 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-@media (max-width: 600px) {
+
+@media (max-width: 768px) {
+  .main-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 10px !important;
+    border-left: none !important;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: none !important;
+  }
+
   .location-fields {
     flex-direction: column !important;
-    gap: 0 !important;
+    gap: 10px !important;
   }
+
+  .form-control,
+  select,
+  textarea,
+  button {
+    width: 100% !important;
+    font-size: 16px;
+  }
+
+  .btn {
+    margin-top: 10px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  h1, h2, h3, label {
+    font-size: 18px !important;
+    text-align: center;
+  }
+}
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
 }
