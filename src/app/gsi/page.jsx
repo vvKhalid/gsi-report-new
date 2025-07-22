@@ -10,6 +10,7 @@ import LastReportsPopup from "@/components/LastReportsPopup";
 import { Analytics } from "@vercel/analytics/next"
 import { useRouter } from "next/navigation";
 import React from "react";
+import './globals.css';
 
 
 
