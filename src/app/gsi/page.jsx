@@ -1032,13 +1032,14 @@ style={{
     style={{
       background: "#fff",
       borderRadius: 16,
-      padding: "clamp(16px, 4vw, 28px)", // Increased min padding
+      padding: isMobile ? "16px" : "clamp(16px, 4vw, 28px)",
       maxWidth: 800,
-      width: "calc(100vw - 20px)", // Better mobile width calculation
-      margin: "24px auto",
+      width: isMobile ? "calc(100vw - 32px)" : "calc(100vw - 20px)", // More margin on mobile
+      margin: isMobile ? "16px" : "24px auto",
       boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
       borderLeft: "6px solid #2563eb",
       position: "relative",
+      boxSizing: "border-box", // Important: prevents padding from adding to width
     }}
   >
     {/* Delete Button */}
@@ -1256,7 +1257,9 @@ style={{
       display: "flex", 
       flexDirection: "column", 
       gap: 16, 
-      marginBottom: 16 
+      marginBottom: 16,
+      width: "100%", // Ensure container doesn't overflow
+      boxSizing: "border-box"
     }}>
       {/* Description - Full Width */}
       <div>
@@ -1279,7 +1282,8 @@ style={{
             resize: "vertical",
             fontSize: isMobile ? 16 : 14,
             padding: isMobile ? "12px" : "8px 12px",
-            boxSizing: "border-box"
+            boxSizing: "border-box",
+            maxWidth: "100%" // Prevent textarea from growing beyond container
           }}
         />
       </div>
