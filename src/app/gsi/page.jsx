@@ -281,8 +281,16 @@ export default function GSIReport() {
       date: ""
     }  
   ]);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
+const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const handleResize = () => {
+    setIsMobile(window.innerWidth <= 600);
+  };
+  window.addEventListener("resize", handleResize);
+  handleResize(); // أول تشغيل
+  return () => window.removeEventListener("resize", handleResize);
+}, []);  const [showLastReportsPopup, setShowLastReportsPopup] = useState(false);
   const [showStatsPopup, setShowStatsPopup] = useState(false);
   const [observations, setObservations] = useState([]);
 
@@ -796,28 +804,35 @@ alert("Word file created. Saved data has been deleted.");
       </div>
 
       {/* فورم تسجيل الدخول في الوسط */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            background: "rgba(30,36,48,0.11)",
-            padding: 36,
-            borderRadius: 16,
-            boxShadow: "0 6px 36px #3b82f633",
-            minWidth: 320,
-            maxWidth: 340,
-            backdropFilter: "blur(1.5px)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    width: "100vw",
+    padding: 20,
+    boxSizing: "border-box",
+    overflowX: "hidden", // يمنع التحريك يمين يسار بالجوال
+  }}
+>
+
+<div
+  style={{
+    background: "rgba(30,36,48,0.11)",
+    padding: 36,
+    borderRadius: 16,
+    boxShadow: "0 6px 36px #3b82f633",
+    width: "100%",
+    maxWidth: 340,
+    margin: "0 auto",
+    boxSizing: "border-box", // ✅ أضف هذا
+    backdropFilter: "blur(1.5px)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  }}
+>
           <h2
             style={{
               color: "#ffffffff",
@@ -1010,53 +1025,82 @@ style={{
           
         </div>
         {/* Observations */}
-    {entries.map((entry, idx) => (
+   {/* Fixed version of your form with proper mobile responsiveness */}
+{entries.map((entry, idx) => (
   <div
     key={idx}
     style={{
-  background: "#fff",
-  borderRadius: 16,
-  padding: "clamp(10px, 4vw, 28px)",
-  maxWidth: 800, // كافي للجوال والكمبيوتر
-  width: "98vw",
-  margin: "24px auto",
-  boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
-  borderLeft: "6px solid #2563eb",
-  position: "relative",
+      background: "#fff",
+      borderRadius: 16,
+      padding: "clamp(16px, 4vw, 28px)", // Increased min padding
+      maxWidth: 800,
+      width: "calc(100vw - 20px)", // Better mobile width calculation
+      margin: "24px auto",
+      boxShadow: "0 3px 10px rgba(147, 197, 253, 0.27)",
+      borderLeft: "6px solid #2563eb",
+      position: "relative",
     }}
   >
-    {/* زر الحذف */}
+    {/* Delete Button */}
     <button
       onClick={() => handleDelete(idx)}
       style={{
         position: "absolute",
-        top: 10,
-        right: 10,
+        top: 12,
+        right: 12,
         background: "transparent",
         border: "none",
         color: "#e11d48",
-        fontSize: 24,
+        fontSize: isMobile ? 28 : 24, // Larger on mobile for touch
         cursor: "pointer",
+        width: isMobile ? 32 : 'auto',
+        height: isMobile ? 32 : 'auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
       aria-label={`Delete observation ${idx + 1}`}
     >
       &times;
     </button>
 
-    {/* السطر الأول */}
-    <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
-      <div style={{ flex: "1 1 150px" }}>
-       <label style={labelStyle}>Date</label>
-<input
-  type="date"
-  value={entry.date}
-  onChange={e => updateEntry(idx, "date", e.target.value)}
-  style={inputStyle}
-/>
-
+    {/* Row 1: Date, Location, Assigned Location */}
+    <div style={{ 
+      display: "flex", 
+      flexDirection: isMobile ? "column" : "row", 
+      gap: isMobile ? 16 : 12, 
+      marginBottom: 16 
+    }}>
+      <div style={{ flex: isMobile ? "none" : "1 1 150px" }}>
+        <label style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>Date</label>
+        <input
+          type="date"
+          value={entry.date}
+          onChange={e => updateEntry(idx, "date", e.target.value)}
+          style={{
+            ...inputStyle,
+            width: "100%",
+            fontSize: isMobile ? 16 : 14, // Prevents zoom on iOS
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
+          }}
+        />
       </div>
-      <div style={{ flex: "2 1 220px" }}>
-        <label style={labelStyle}>Location</label>
+      
+      <div style={{ flex: isMobile ? "none" : "2 1 220px" }}>
+        <label style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>Location</label>
         <select
           id={`main-location-${idx}`}
           value={entry.mainLocation || ""}
@@ -1069,7 +1113,13 @@ style={{
               updateEntry(idx, "location", "");
             }
           }}
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            width: "100%",
+            fontSize: isMobile ? 16 : 14,
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
+          }}
         >
           <option value="">Select Location</option>
           {Object.keys(LOCATIONS).map((main) => (
@@ -1079,8 +1129,15 @@ style={{
           ))}
         </select>
       </div>
-      <div style={{ flex: "2 1 220px" }}>
-        <label style={labelStyle}>Assigned Inspection Location</label>
+      
+      <div style={{ flex: isMobile ? "none" : "2 1 220px" }}>
+        <label style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>Assigned Inspection Location</label>
         <select
           id={`side-location-${idx}`}
           value={entry.sideLocation || ""}
@@ -1088,7 +1145,13 @@ style={{
             updateEntry(idx, "sideLocation", e.target.value);
             updateEntry(idx, "location", `${entry.mainLocation} - ${e.target.value}`);
           }}
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            width: "100%",
+            fontSize: isMobile ? 16 : 14,
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
+          }}
         >
           <option value="">Select Assigned Inspection Location</option>
           {entry.mainLocation && LOCATIONS[entry.mainLocation]
@@ -1102,128 +1165,224 @@ style={{
       </div>
     </div>
 
-    {/* السطر الثاني */}
-<div style={{ flex: "4 1 600px" }}>  {/* زودت flex عشان يكون عرضه أكبر */}
-  <label style={labelStyle}>Exact Location</label>
-  <input
-    id={`exact-location-${idx}`}
-    placeholder="Enter the exact location (Ward 11, Room #101,etc)"
-    value={entry.exactLocation || ""}
-    onChange={(e) => updateEntry(idx, "exactLocation", e.target.value)}
-    style={{ ...inputStyle, width: "98%" }}  // عشان ياخذ كل عرض الـ div
-  />
-      
-<div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
-  <div style={{ flex: "1 1 150px" }}>
-    <label style={labelStyle}>Status</label>
-<select
-  id={`status-${idx}`}
-  value={entry.status}
-  onChange={(e) => updateEntry(idx, "status", e.target.value)}
-  style={{ ...inputStyle, width: "300px" }}
->
-  <option value="">Select status</option>
-  <option value="Rectified">Rectified</option>
-  <option value="Previously reported / Not Rectified">Previously reported / Not Rectified</option>
-  <option value="New">New</option>
-</select>
+    {/* Row 2: Exact Location (Full Width) */}
+    <div style={{ marginBottom: 16 }}>
+      <label style={{
+        ...labelStyle,
+        display: 'block',
+        marginBottom: 8,
+        fontSize: isMobile ? 16 : 14,
+        fontWeight: 600
+      }}>Exact Location</label>
+      <input
+        id={`exact-location-${idx}`}
+        placeholder="Enter the exact location (Ward 11, Room #101, etc)"
+        value={entry.exactLocation || ""}
+        onChange={(e) => updateEntry(idx, "exactLocation", e.target.value)}
+        style={{
+          ...inputStyle,
+          width: "100%",
+          fontSize: isMobile ? 16 : 14,
+          padding: isMobile ? "12px" : "8px 12px",
+          boxSizing: "border-box"
+        }}
+      />
+    </div>
 
-  </div>
-  <div style={{ flex: "1 1 150px" }}>
-    <label style={labelStyle}>Risk / Priority</label>
-<select
-  id={`risk-${idx}`}
-  value={entry.risk}
-  onChange={(e) => updateEntry(idx, "risk", e.target.value)}
-  style={{ ...inputStyle, width: "300px" }}
->
-  <option value="">Risk/Priority</option>
-  <option value="High">High</option>
-  <option value="Medium">Medium</option>
-  <option value="Low">Low</option>
-</select>
-
-  </div>
-  </div>
-  </div>
-
-    {/* السطر الثالث */}
-    <div
-      style={{
-        display: "flex",
-        gap: 16,
-        flexWrap: "wrap",
-        alignItems: "flex-end",
-        marginBottom: 12,
-      }}
-    >
-      <div style={{ flex: "3 1 400px" }}>
-      <label style={labelStyle}>Description of Observation</label>
-<textarea
-  id={`findings-${idx}`}
-  placeholder="Enter The Description of The Observation"
-  value={entry.findings}
-  onChange={(e) => updateEntry(idx, "findings", e.target.value)}
-  style={{ ...inputStyle, width: "98%", minHeight: 80, resize: "vertical" }}
-/>
-
-      </div>
-      <div style={{ flex: "1 1 180px" }}>
-        <label style={{ ...labelStyle, textAlign: "center", marginBottom: 4 }}>Attach Photos (2 Max)</label>
-        <input
-          id={`image-upload-${idx}`}
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => updateImages(idx, e.target.files)}
-          disabled={entry.images && entry.images.length >= 2}
-          style={{ marginBottom: 0 }}
-        />
-      </div>
-      <div style={{ flex: "1 1 180px" }}>
-        <label style={labelStyle}>Classification</label>
+    {/* Row 3: Status and Risk/Priority */}
+    <div style={{ 
+      display: "flex", 
+      flexDirection: isMobile ? "column" : "row", 
+      gap: isMobile ? 16 : 12, 
+      marginBottom: 16 
+    }}>
+      <div style={{ flex: "1" }}>
+        <label style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>Status</label>
         <select
-  id={`classification-${idx}`}
-  value={entry.classification}
-  onChange={(e) => updateEntry(idx, "classification", e.target.value)}
-  style={{ ...inputStyle, width: "700px" }}
->
-          <option value="">Classification</option>
-          <option value="Building Structures and Appearance">Building Structures and Appearance</option>
-          <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">
-            Facility Maintenance (e.g., Electrical plumbing drainage issue)
-          </option>
-          <option value="Safety & Security measures in internal and external areas">
-            Safety & Security measures in internal and external areas
-          </option>
-          <option value="Support Services (e.g., Environmental /Housekeeping)">
-            Support Services (e.g., Environmental /Housekeeping)
-          </option>
-          <option value="Availability, Attitude and attentiveness of service providers">
-            Availability, Attitude and attentiveness of service providers
-          </option>
-          <option value="Concerns raised by staff at any inspected location">
-            Concerns raised by staff at any inspected location
-          </option>
-          <option value="Unsolved patients Issues during the time of inspection">
-            Unsolved patients Issues during the time of inspection
-          </option>
-          <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">
-            Policy Compliance (general policies such as non-smoking and dress code-wearing badges)
-          </option>
-          <option value="Space utilization">Space utilization</option>
-          <option value="property condition">property condition</option>
-          <option value="any other Operational deficiencies/ Obstacles">
-            any other Operational deficiencies/ Obstacles
-          </option>
+          id={`status-${idx}`}
+          value={entry.status}
+          onChange={(e) => updateEntry(idx, "status", e.target.value)}
+          style={{
+            ...inputStyle,
+            width: "100%",
+            fontSize: isMobile ? 16 : 14,
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
+          }}
+        >
+          <option value="">Select status</option>
+          <option value="Rectified">Rectified</option>
+          <option value="Previously reported / Not Rectified">Previously reported / Not Rectified</option>
+          <option value="New">New</option>
+        </select>
+      </div>
+      
+      <div style={{ flex: "1" }}>
+        <label style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>Risk / Priority</label>
+        <select
+          id={`risk-${idx}`}
+          value={entry.risk}
+          onChange={(e) => updateEntry(idx, "risk", e.target.value)}
+          style={{
+            ...inputStyle,
+            width: "100%",
+            fontSize: isMobile ? 16 : 14,
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
+          }}
+        >
+          <option value="">Risk/Priority</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
         </select>
       </div>
     </div>
 
-    {/* السطر الرابع */}
-    <div style={{ marginTop: 12, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-      <div style={{ flex: "1 1 200px" }}>
-        <label htmlFor={`badge-${idx}`} style={labelStyle}>
+    {/* Row 4: Description, Photo Upload, and Classification */}
+    <div style={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: 16, 
+      marginBottom: 16 
+    }}>
+      {/* Description - Full Width */}
+      <div>
+        <label style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>Description of Observation</label>
+        <textarea
+          id={`findings-${idx}`}
+          placeholder="Enter The Description of The Observation"
+          value={entry.findings}
+          onChange={(e) => updateEntry(idx, "findings", e.target.value)}
+          style={{
+            ...inputStyle,
+            width: "100%",
+            minHeight: isMobile ? 100 : 80,
+            resize: "vertical",
+            fontSize: isMobile ? 16 : 14,
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
+          }}
+        />
+      </div>
+      
+      {/* Photo Upload and Classification Side by Side on Desktop, Stacked on Mobile */}
+      <div style={{ 
+        display: "flex", 
+        flexDirection: isMobile ? "column" : "row", 
+        gap: isMobile ? 16 : 12 
+      }}>
+        <div style={{ flex: isMobile ? "none" : "1" }}>
+          <label style={{
+            ...labelStyle,
+            display: 'block',
+            marginBottom: 8,
+            fontSize: isMobile ? 16 : 14,
+            fontWeight: 600,
+            textAlign: isMobile ? "left" : "center"
+          }}>Attach Photos (2 Max)</label>
+          <input
+            id={`image-upload-${idx}`}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) => updateImages(idx, e.target.files)}
+            disabled={entry.images && entry.images.length >= 2}
+            style={{
+              width: "100%",
+              fontSize: isMobile ? 16 : 14,
+              padding: isMobile ? "8px" : "4px",
+              boxSizing: "border-box"
+            }}
+          />
+        </div>
+        
+        <div style={{ flex: isMobile ? "none" : "2" }}>
+          <label style={{
+            ...labelStyle,
+            display: 'block',
+            marginBottom: 8,
+            fontSize: isMobile ? 16 : 14,
+            fontWeight: 600
+          }}>Classification</label>
+          <select
+            id={`classification-${idx}`}
+            value={entry.classification}
+            onChange={(e) => updateEntry(idx, "classification", e.target.value)}
+            style={{
+              ...inputStyle,
+              width: "100%",
+              fontSize: isMobile ? 16 : 14,
+              padding: isMobile ? "12px" : "8px 12px",
+              boxSizing: "border-box"
+            }}
+          >
+            <option value="">Classification</option>
+            <option value="Building Structures and Appearance">Building Structures and Appearance</option>
+            <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">
+              Facility Maintenance (e.g., Electrical plumbing drainage issue)
+            </option>
+            <option value="Safety & Security measures in internal and external areas">
+              Safety & Security measures in internal and external areas
+            </option>
+            <option value="Support Services (e.g., Environmental /Housekeeping)">
+              Support Services (e.g., Environmental /Housekeeping)
+            </option>
+            <option value="Availability, Attitude and attentiveness of service providers">
+              Availability, Attitude and attentiveness of service providers
+            </option>
+            <option value="Concerns raised by staff at any inspected location">
+              Concerns raised by staff at any inspected location
+            </option>
+            <option value="Unsolved patients Issues during the time of inspection">
+              Unsolved patients Issues during the time of inspection
+            </option>
+            <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">
+              Policy Compliance (general policies such as non-smoking and dress code-wearing badges)
+            </option>
+            <option value="Space utilization">Space utilization</option>
+            <option value="property condition">property condition</option>
+            <option value="any other Operational deficiencies/ Obstacles">
+              any other Operational deficiencies/ Obstacles
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {/* Row 5: Badge Number and Image Previews */}
+    <div style={{ 
+      display: "flex", 
+      flexDirection: isMobile ? "column" : "row", 
+      gap: 16, 
+      alignItems: isMobile ? "stretch" : "flex-start" 
+    }}>
+      <div style={{ flex: isMobile ? "none" : "0 0 200px" }}>
+        <label htmlFor={`badge-${idx}`} style={{
+          ...labelStyle,
+          display: 'block',
+          marginBottom: 8,
+          fontSize: isMobile ? 16 : 14,
+          fontWeight: 600
+        }}>
           Badge Number:
         </label>
         <input
@@ -1233,63 +1392,90 @@ style={{
           placeholder="Badge number"
           value={entry.badge}
           onChange={(e) => updateEntry(idx, "badge", e.target.value)}
-          style={{ ...inputStyle, fontWeight: "bold" , width: "80px" }}
-        />
-      </div>
-
-      {/* صور المعاينة */}
-      <div style={{ display: "flex", gap: 9, flexWrap: "wrap", flex: "2 1 400px" }}>
-  {entry.images && entry.images.map((img, i) => {
-    // تأكد إن img موجود ومن النوع الصحيح
-    if (!img || !(img instanceof Blob)) return null;
-    return (
-      <div
-        key={i}
-        style={{
-          position: "relative",
-          border: "1px solid #e0e7ef",
-          borderRadius: 9,
-          overflow: "hidden",
-        }}
-      >
-        <img
-          src={URL.createObjectURL(img)}
-          alt=""
-          width={64}
-          height={48}
-          style={{ objectFit: "cover" }}
-        />
-        <button
-          onClick={() => removeImage(idx, i)}
           style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            background: "rgba(255, 0, 0, 0.8)",
-            border: "none",
-            color: "white",
+            ...inputStyle,
             fontWeight: "bold",
-            cursor: "pointer",
-            borderRadius: "0 9px 0 9px",
-            width: 24,
-            height: 24,
-            lineHeight: "22px",
-            textAlign: "center",
-            padding: 0,
+            width: isMobile ? "100%" : "120px",
+            fontSize: isMobile ? 16 : 14,
+            padding: isMobile ? "12px" : "8px 12px",
+            boxSizing: "border-box"
           }}
-          aria-label={`Remove image ${i + 1}`}
-        >
-          ×
-        </button>
+        />
       </div>
-    );
-  })}
-</div>
 
+      {/* Image Previews */}
+      {entry.images && entry.images.length > 0 && (
+        <div style={{ 
+          display: "flex", 
+          gap: 12, 
+          flexWrap: "wrap", 
+          flex: "1",
+          marginTop: isMobile ? 8 : 0
+        }}>
+          <label style={{
+            ...labelStyle,
+            display: 'block',
+            width: '100%',
+            marginBottom: 8,
+            fontSize: isMobile ? 16 : 14,
+            fontWeight: 600
+          }}>Photo Previews:</label>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {entry.images.map((img, i) => {
+              if (!img || !(img instanceof Blob)) return null;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    position: "relative",
+                    border: "1px solid #e0e7ef",
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                  }}
+                >
+                  <img
+                    src={URL.createObjectURL(img)}
+                    alt=""
+                    width={isMobile ? 80 : 64}
+                    height={isMobile ? 60 : 48}
+                    style={{ objectFit: "cover" }}
+                  />
+                  <button
+                    onClick={() => removeImage(idx, i)}
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      right: 2,
+                      background: "rgba(255, 0, 0, 0.9)",
+                      border: "none",
+                      color: "white",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      borderRadius: "50%",
+                      width: isMobile ? 28 : 24,
+                      height: isMobile ? 28 : 24,
+                      lineHeight: "1",
+                      textAlign: "center",
+                      padding: 0,
+                      fontSize: isMobile ? 16 : 14,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    aria-label={`Remove image ${i + 1}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   </div>
 ))}
-
         {/* الأزرار */}
         <div style={{ display: "flex", gap: 13, justifyContent: "center", marginTop: 15, flexWrap: "wrap" }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
