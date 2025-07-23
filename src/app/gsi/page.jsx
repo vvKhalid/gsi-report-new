@@ -1085,7 +1085,8 @@ style={{
             ...inputStyle,
             width: "100%",
             fontSize: isMobile ? 16 : 14, // Prevents zoom on iOS
-            padding: isMobile ? "12px" : "8px 12px",
+      padding: isMobile ? "6px 8px" : "8px 12px",  // عدل هنا 👈
+            height: isMobile ? 40 : 32,                  // أضف هذا السطر 👈
             boxSizing: "border-box"
           }}
         />
@@ -1469,19 +1470,7 @@ style={{
               );
             })}
           </div>
-          <div
-  style={{
-    width: "100%",
-    textAlign: "center",
-    color: "#64748b",
-    fontSize: 13,
-    margin: "24px 0 8px 0",
-    opacity: 0.7,
-    letterSpacing: ".03em",
-  }}
->
-  Developed & Designed by Khalid ©  
-</div>
+  
         </div>
       )}
     </div>
@@ -1495,6 +1484,19 @@ style={{
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
           <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save you can add them later)</button>
         </div>
+                <div
+  style={{
+    width: "100%",
+    textAlign: "center",
+    color: "#64748b",
+    fontSize: 13,
+    margin: "24px 0 8px 0",
+    opacity: 0.7,
+    letterSpacing: ".03em",
+  }}
+>
+  Developed & Designed by Khalid ©  
+</div>
         {/* Popup الإحصائيات */}
         {showStats && (
           <StatisticsPopup onClose={() => setShowStats(false)} />
