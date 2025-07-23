@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { saveAs } from "file-saver";
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, BorderStyle } from "docx";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun,ImageRun,BorderStyle } from "docx";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -604,9 +604,11 @@ const generateWordPhotoNumbers = async () => {
     return Object.values(map);
   };
 
-  // 3️⃣ جهّز صفوف الجدول مع ترقيم الصور
+  // 3️⃣ جهّز صفوف الجدول مع ترقيم الصور وترقيم الصفوف (متسلسل)
   let photoCounter = 1;
+  let rowNumber = 1; // ⬅️ هذا هو الحل، عرّف rowNumber هنا
   const grouped = groupEntries(entries);
+
   const tableRows = [
     // header
     new TableRow({
@@ -625,23 +627,23 @@ const generateWordPhotoNumbers = async () => {
     }),
     // data
     ...grouped.flatMap(group =>
-      group.map((e, idx) => {
+      group.map(e => {
         let photoText = '';
         if (e.images?.length) {
           const start = photoCounter, end = photoCounter + e.images.length - 1;
-          photoText = e.images.length===1
+          photoText = e.images.length === 1
             ? `Photo#${start}`
             : `Photos#${start},${end}`;
           photoCounter += e.images.length;
         }
         return new TableRow({
           children: [
-            String(idx+1),
+            String(rowNumber++), // ترقيم متسلسل صحيح مهما تغير التاريخ
             e.date ? new Date(e.date).toLocaleDateString("en-US", {
-  day: "numeric",
-  month: "long",
-  year: "numeric"
-}) : "—",
+              day: "numeric",
+              month: "long",
+              year: "numeric"
+            }) : "—",
             e.mainLocation||'—',
             e.sideLocation||'—',
             e.exactLocation||'',
@@ -674,33 +676,32 @@ const generateWordPhotoNumbers = async () => {
   });
 
   const blob = await Packer.toBlob(doc);
-const badge = entries[0]?.badge || "UnknownBadge";
-const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
-const today = new Date();
-const dateString = today.toISOString().slice(0,10);
+  const badge = entries[0]?.badge || "UnknownBadge";
+  const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
+  const today = new Date();
+  const dateString = today.toISOString().slice(0,10);
 
-const filename = `Report_${assignedLocation}_${badge}_${dateString}.docx`;
+  const filename = `Report_${assignedLocation}_${badge}_${dateString}.docx`;
 
+  // 6️⃣ حاول ترفع الملف أولاً وخزّن الرابط
+  let fileUrl;
+  try {
+    const badge = entries[0]?.badge;
+    fileUrl = await uploadReportBlob(blob, filename, badge);
+    console.log("Uploaded report to:", fileUrl);
+  } catch (err) {
+    console.error("Upload report failed", err);
+    // لو الرفع فشل ممكن تنبه المستخدم أو تستمر وتنزل الملف محلياً:
+    alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
+  }
 
-// 6️⃣ حاول ترفع الملف أولاً وخزّن الرابط
-let fileUrl;
-try {
-const badge = entries[0]?.badge;
-fileUrl = await uploadReportBlob(blob, filename, badge);
-  console.log("Uploaded report to:", fileUrl);
-} catch (err) {
-  console.error("Upload report failed", err);
-  // لو الرفع فشل ممكن تنبه المستخدم أو تستمر وتنزل الملف محلياً:
-  alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
-}
+  // 7️⃣ نزّل الملف للمستخدم
+  saveAs(blob, filename);
 
-// 7️⃣ نزّل الملف للمستخدم
-saveAs(blob, filename);
-
-// 8️⃣ نظّف التخزين المحلي
-localStorage.removeItem("gsi_entries");
-localStorage.removeItem("gsi_badge");
-alert("Word file created. Saved data has been deleted.");
+  // 8️⃣ نظّف التخزين المحلي
+  localStorage.removeItem("gsi_entries");
+  localStorage.removeItem("gsi_badge");
+  alert("Word file created. Saved data has been deleted.");
 };
 
 
