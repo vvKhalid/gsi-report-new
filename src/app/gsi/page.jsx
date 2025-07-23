@@ -933,30 +933,22 @@ style={{
  <img
         src="/ia.png"
         alt="Logo AI"
-        style={{
-          position: "fixed",
-          top: isMobile ? 40 : 60,
-          left: isMobile ? 12 : 245,
-          width: isMobile ? 80 : 120,
-          height: isMobile ? 25 : 50,
-          borderRadius: isMobile ? 8 : 12,
-          objectFit: "contain",
-          zIndex: 10,
-        }}
+     style={{
+        width: isMobile ? 80 : 110,
+        height: isMobile ? 72 : 100,
+        objectFit: "contain",
+        marginBottom: isMobile ? -20 : -26,
+      }}
       />
       <img
         src="/gsi.png"
         alt="Logo AI"
-        style={{
-          position: "fixed",
-          top: isMobile ? 10 : 20,
-          right: isMobile ? 190 : 245,
-          width: isMobile ? 70 : 120,
-          height: isMobile ? 55 : 90,
-          borderRadius: isMobile ? 8 : 12,
-          objectFit: "contain",
-          zIndex: 10,
-        }}
+    style={{
+        width: isMobile ? 110 : 150,
+        height: isMobile ? 72 : 100,
+        objectFit: "contain",
+        marginBottom: isMobile ? 6 :0,
+      }}
   />
 
   {userName && (
@@ -1020,23 +1012,7 @@ style={{
   <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
 )}
 
-  {/* زر Reload */}
-  <button
-    onClick={() => window.location.reload()}
-    style={{
-      background: "#e11d48",
-      color: "#fff",
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 6px",
-      fontWeight: "bold",
-      fontSize: 12,
-      cursor: "pointer",
-      boxShadow: "0 2px 6px #e11d4844",
-    }}
-  >
-    Reload
-  </button>
+
 </div>
 
 
@@ -1068,7 +1044,7 @@ style={{
   style={{
     position: "absolute",
     top: isMobile ? 10 : 16,
-    right: isMobile ? -170 : 16,
+    right: isMobile ? -160 : 16,
     background: "transparent",
     border: "none",
     color: "#e11d48",
