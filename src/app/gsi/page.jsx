@@ -1021,7 +1021,7 @@ style={{
           
         </div>
         {/* Observations */}
-   {/* Fixed version of your form with proper mobile responsiveness */}
+  
 {entries.map((entry, idx) => (
   <div
     key={idx}
@@ -1066,7 +1066,7 @@ style={{
     <div style={{ 
       display: "flex", 
       flexDirection: isMobile ? "column" : "row", 
-      gap: isMobile ? 16 : 12, 
+      gap: isMobile ? 16 : 14, 
       marginBottom: 16 
     }}>
       <div style={{ flex: isMobile ? "none" : "1 1 150px" }}>
@@ -1404,6 +1404,7 @@ style={{
         />
       </div>
 
+
       {/* Image Previews */}
       {entry.images && entry.images.length > 0 && (
         <div style={{ 
@@ -1463,10 +1464,24 @@ style={{
     >
   <span style={{fontWeight:"900", fontSize: isMobile ? 28 : 22, letterSpacing: 1}}>×</span>
     </button>
+    
                 </div>
               );
             })}
           </div>
+          <div
+  style={{
+    width: "100%",
+    textAlign: "center",
+    color: "#64748b",
+    fontSize: 13,
+    margin: "24px 0 8px 0",
+    opacity: 0.7,
+    letterSpacing: ".03em",
+  }}
+>
+  Developed & Designed by Khalid ©  
+</div>
         </div>
       )}
     </div>
