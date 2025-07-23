@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { saveAs } from "file-saver";
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun } from "docx";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, BorderStyle } from "docx";
+
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { uploadReportBlob, uploadImageBlob } from "./lib/storage";
@@ -150,17 +151,17 @@ function makeEmptyArea(name) {
   };
 // ====== البادجات ======
 const badgeUsers = {
-  "53075": "Hanan Al Shuwaier",
-  "51888": "Bander Al Zakari",
-  "55723": "Haitham Al Mughamis",
-  "56392": "Nasser Abu Haimed",
-  "62111": "Bader Al Enezi",
-  "74770": "Sumer Alkhudeiri",
-  "69444": "Khulood Al Otaibi",
-  "18000": "Salma Al Saqaby",
-  "78879": "Khalid Al Mutairi",
-  "100696": "Abdullah Al Enezi",
-  "100729": "Ghozlan Alkharaan",
+  "53075": "HANAN AL SHUWAIER",
+  "51888": "BANDER AL ZAKARI",
+  "55723": "HAITHAM AL MUGHAMIS",
+  "56392": "NASSER ABU HAIMED",
+  "62111": "BADER AL ENEZI",
+  "74770": "SUMER ALKHUDEIRI",
+  "69444": "KHULOOD AL OTAIBI",
+  "18000": "SALMA AL SAQABY",
+  "78879": "KHALID AL MUTAIRI",
+  "100696": "ABDULLAH AL ENEZI",
+  "100729": "GHOZLAN ALKHARAAN"
 };
 const LOCATIONS = {
   "Hospitals": [
@@ -714,94 +715,95 @@ alert("Word file created. Saved data has been deleted.");
     backgroundSize: "cover",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
+    display: "flex",            // ⬅️ أضفت هذه
+    flexDirection: "column",    // ⬅️ أضفت هذه
+    alignItems: "center",       // محاذاة أفقية بالنص
+    justifyContent: "center",   // محاذاة عمودية بالنص
   }}
     >
       {/* الهيدر */}
+      
       <div
-        style={{
-          width: "100%",
-          padding: "34px 46px 0 46px",
-          boxSizing: "border-box",
-          position: "relative",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
-        {/* يسار: شعار + وزارة */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <img
-            src="/mngha.png" // عدل المسار حسب صورتك
-            alt="mngha"
-            style={{
-              width: 150,
-              height: 100,
-              objectFit: "contain",
-            }}
-          />
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            lineHeight: 1.12,
-            minWidth: 180,
-          }}>
-            <div
   style={{
     width: "100%",
-    padding: "34px 46px 0 46px",
+    padding: isMobile ? "18px 12px 0 12px" : "34px 46px 0 46px",
     boxSizing: "border-box",
     position: "relative",
     display: "flex",
-    flexDirection: isMobile ? "column" : "row",
-    justifyContent: "space-between",
-    alignItems: isMobile ? "center" : "flex-start",
-    gap: isMobile ? 20 : 0,
+    flexDirection: isMobile ? "column" : "row",         // صف أو عمودي
+    justifyContent: isMobile ? "center" : "space-between",
+    alignItems: isMobile ? "center" : "flex-start",      // محاذاة فوق أو وسط حسب الجهاز
+    gap: isMobile ? 18 : 0,                              // فراغ بسيط للجوال
+    textAlign: isMobile ? "center" : "left"
   }}
-></div>
-            <span style={{
-              color: "#ffffffff",
-              fontWeight: 700,
-              fontSize: 21,
-              whiteSpace: "nowrap",
-              marginBottom: 2,
-            }}>
-              Ministry of National Guard
-            </span>
-            <span style={{
-              color: "#ffffffff",
-              fontWeight: 800,
-              fontSize: 18,
-              whiteSpace: "nowrap",
-              letterSpacing: ".2px",
-            }}>
-              Health Affairs
-            </span>
-          </div>
-        </div>
-        {/* يمين: عناوين التدقيق */}
-        <div style={{ textAlign: "right" }}>
-          <div
-  style={{
-    width: "100%",
-    padding: "34px 46px 0 46px",
-    boxSizing: "border-box",
-    position: "relative",
+>
+  {/* يسار: شعار + وزارة */}
+  <div style={{
     display: "flex",
+    alignItems: "center",
+    gap: 12,
     flexDirection: isMobile ? "column" : "row",
-    justifyContent: "space-between",
-    alignItems: isMobile ? "center" : "flex-start",
-    gap: isMobile ? 20 : 0,
-  }}
-></div>
-          <div style={{ color: "#ffffffff", fontWeight: 700, fontSize: 21, marginBottom: 2 }}>
-            Internal Audit
-          </div>
-          <div style={{ color: "#ffffffff", fontWeight: 800, fontSize: 18 }}>
-            General Services Inspections
-          </div>
-        </div>
-      </div>
+    marginBottom: isMobile ? 10 : 0,
+  }}>
+    <img
+      src="/mngha.png"
+      alt="mngha"
+      style={{
+        width: isMobile ? 110 : 150,
+        height: isMobile ? 72 : 100,
+        objectFit: "contain",
+        marginBottom: isMobile ? 6 : 0,
+      }}
+    />
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: isMobile ? "center" : "flex-start",
+      lineHeight: 1.12,
+      minWidth: 180,
+    }}>
+      <span style={{
+        color: "#fff",
+        fontWeight: 700,
+        fontSize: isMobile ? 16 : 21,
+        whiteSpace: "nowrap",
+        marginBottom: 2,
+      }}>
+        Ministry of National Guard
+      </span>
+      <span style={{
+        color: "#fff",
+        fontWeight: 800,
+        fontSize: isMobile ? 14 : 18,
+        whiteSpace: "nowrap",
+        letterSpacing: ".2px",
+      }}>
+        Health Affairs
+      </span>
+    </div>
+  </div>
+  {/* يمين: عناوين التدقيق */}
+  <div style={{
+    textAlign: isMobile ? "center" : "right",
+    marginTop: isMobile ? 12 : 0
+  }}>
+    <div style={{
+      color: "#fff",
+      fontWeight: 700,
+      fontSize: isMobile ? 16 : 21,
+      marginBottom: 2
+    }}>
+      Internal Audit
+    </div>
+    <div style={{
+      color: "#fff",
+      fontWeight: 800,
+      fontSize: isMobile ? 14 : 18
+    }}>
+      General Services Inspections
+    </div>
+  </div>
+</div>
 
       {/* فورم تسجيل الدخول في الوسط */}
 <div
@@ -824,7 +826,7 @@ alert("Word file created. Saved data has been deleted.");
     borderRadius: 16,
     boxShadow: "0 6px 36px #3b82f633",
     width: "100%",
-    maxWidth: 340,
+    maxWidth: 430,
     margin: "0 auto",
     boxSizing: "border-box", // ✅ أضف هذا
     backdropFilter: "blur(1.5px)",
@@ -933,8 +935,8 @@ style={{
     src="/gsi.png"
     alt="Logo AI"
     style={{
-      width: 50,
-      height: 50,
+      width: 90,
+      height: 90,
       borderRadius: 12,
       objectFit: "contain",
     }}
@@ -942,13 +944,13 @@ style={{
   {userName && (
     <div
       style={{
-        fontSize: 14,
+        fontSize: 15,
         color: "#000000ff",
         fontWeight: "bold",
         marginTop: 4,
       }}
     >
-      <span style={{ color: "#000000ff", fontWeight: "bold" }}>Welcome, </span>
+      <span style={{ color: "#000000ff", fontWeight: "bold" }}>WELCOME, </span>
       <span>{userName}</span>
     </div>
   )}
@@ -1047,7 +1049,7 @@ style={{
       onClick={() => handleDelete(idx)}
       style={{
         position: "absolute",
-        top: 12,
+        top: 7,
         right: 12,
         background: "transparent",
         border: "none",
@@ -1062,7 +1064,7 @@ style={{
       }}
       aria-label={`Delete observation ${idx + 1}`}
     >
-      &times;
+  <span style={{fontWeight:"900", fontSize: isMobile ? 28 : 22, letterSpacing: 1}}>×</span>
     </button>
 
     {/* Row 1: Date, Location, Assigned Location */}
@@ -1445,32 +1447,27 @@ style={{
                     height={isMobile ? 60 : 48}
                     style={{ objectFit: "cover" }}
                   />
-                  <button
-                    onClick={() => removeImage(idx, i)}
-                    style={{
-                      position: "absolute",
-                      top: 2,
-                      right: 2,
-                      background: "rgba(255, 0, 0, 0.9)",
-                      border: "none",
-                      color: "white",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      borderRadius: "50%",
-                      width: isMobile ? 28 : 24,
-                      height: isMobile ? 28 : 24,
-                      lineHeight: "1",
-                      textAlign: "center",
-                      padding: 0,
-                      fontSize: isMobile ? 16 : 14,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    aria-label={`Remove image ${i + 1}`}
-                  >
-                    ×
-                  </button>
+                   <button
+      onClick={() => handleDelete(idx)}
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -2,
+        background: "transparent",
+        border: "none",
+        color: "#e11d48",
+        fontSize: isMobile ? 28 : 24, // Larger on mobile for touch
+        cursor: "pointer",
+        width: isMobile ? 32 : 'auto',
+        height: isMobile ? 32 : 'auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      aria-label={`Delete observation ${idx + 1}`}
+    >
+  <span style={{fontWeight:"900", fontSize: isMobile ? 28 : 22, letterSpacing: 1}}>×</span>
+    </button>
                 </div>
               );
             })}
@@ -1486,7 +1483,7 @@ style={{
           <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word</button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
-          <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save)</button>
+          <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save you can add them later)</button>
         </div>
         {/* Popup الإحصائيات */}
         {showStats && (
@@ -1525,52 +1522,84 @@ function StatisticsPopup({ onClose }) {
       }
     ));
   };
-
-  // توليد ملف وورد
-  const generateStatsWord = async () => {
-    const doc = new Document({
-      sections: [
-        {
-          children: [
-            new Paragraph({
-              children: [new TextRun({ text: "GSI Areas Audit Statistics", bold: true, size: 30 })],
-              alignment: "center",
-            }),
-            new Paragraph(" "),
-            ...areas.filter(a => a.name.trim()).map((area, idx) => [
-              new Paragraph({ children: [new TextRun({ text: `Area Name: ${area.name}`, bold: true, size: 24 })], spacing: { after: 150 } }),
-              new Table({
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({ children: [new Paragraph({ text: "Type", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "Total", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "With Findings", bold: true })] }),
-                      new TableCell({ children: [new Paragraph({ text: "No Findings", bold: true })] }),
-                    ],
-                  }),
-                  ...area.stats.map(stat =>
-                    new TableRow({
-                      children: [
-                        new TableCell({ children: [new Paragraph(stat.label)] }),
-                        new TableCell({ children: [new Paragraph(stat.total.toString())] }),
-                        new TableCell({ children: [new Paragraph(stat.withFindings.toString())] }),
-                        new TableCell({ children: [new Paragraph(stat.withoutFindings.toString())] }),
-                      ],
-                    })
-                  ),
-                ],
-              }),
-              new Paragraph(" "),
-            ]).flat(),
-          ],
-        },
-      ],
-    });
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, "GSI_Areas_Statistics.docx");
+const generateStatsWord = async () => {
+  const tableCellStyle = {
+    margins: { top: 100, bottom: 100, left: 100, right: 100 },
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
+      bottom: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
+      left: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
+      right: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
+    },
   };
 
+  const doc = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "GSI Areas Audit Statistics", bold: true, size: 32 }),
+            ],
+            alignment: "center",
+            spacing: { after: 300 }
+          }),
+          ...areas.filter(a => a.name.trim()).map((area) => [
+            new Paragraph({
+              children: [new TextRun({ text: `Area Name: ${area.name}`, bold: true, size: 26 })],
+              spacing: { after: 150 },
+            }),
+            new Table({
+              rows: [
+                // Header row
+                new TableRow({
+                  children: [
+                    new TableCell({
+                      children: [new Paragraph({ text: "Type", bold: true })],
+                      shading: { fill: "2563eb" },
+                      ...tableCellStyle,
+                    }),
+                    new TableCell({
+                      children: [new Paragraph({ text: "Total", bold: true })],
+                      shading: { fill: "2563eb" },
+                      ...tableCellStyle,
+                    }),
+                    new TableCell({
+                      children: [new Paragraph({ text: "With Findings", bold: true })],
+                      shading: { fill: "2563eb" },
+                      ...tableCellStyle,
+                    }),
+                    new TableCell({
+                      children: [new Paragraph({ text: "No Findings", bold: true })],
+                      shading: { fill: "2563eb" },
+                      ...tableCellStyle,
+                    }),
+                  ],
+                  tableHeader: true,
+                }),
+                // Data rows
+                ...area.stats.map(stat =>
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph(stat.label)], ...tableCellStyle }),
+                      new TableCell({ children: [new Paragraph(stat.total.toString())], ...tableCellStyle }),
+                      new TableCell({ children: [new Paragraph(stat.withFindings.toString())], ...tableCellStyle }),
+                      new TableCell({ children: [new Paragraph(stat.withoutFindings.toString())], ...tableCellStyle }),
+                    ],
+                  })
+                ),
+              ],
+              width: { size: 100, type: "pct" },
+            }),
+            new Paragraph(" "),
+          ]).flat(),
+        ],
+      },
+    ],
+  });
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, "GSI_Areas_Statistics.docx");
+};
 
   return (
     <div style={statsPopupStyle}>
