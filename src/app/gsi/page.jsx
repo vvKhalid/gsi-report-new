@@ -418,25 +418,25 @@ const saveForLater = async () => {
 
   // ملف مع الصور الحقيقية
 const generateWordWithImages = async () => {
- const formatDate = (date) => {
+  // استخراج جميع التواريخ
+  const allDates = entries.map(e => e.date).filter(Boolean).sort();
+  const from = allDates[0];
+  const to = allDates[allDates.length - 1];
+
+  const formatDate = (date) => {
     if (!date) return "—";
     const d = new Date(date);
     return `${d.getDate()} ${d.toLocaleString("en-US", { month: "long" })} - ${d.getFullYear()}`;
   };
+  const periodStr = (from === to)
+    ? formatDate(from)
+    : `${formatDate(from)} to ${formatDate(to)}`;
 
   const tableRows = [
     new TableRow({
       children: [
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-new TableCell({
-  shading: { fill: "4F81BD" },
-  children: [
-    new Paragraph({
-      children: [new TextRun({ text: "Date", color: "FFFFFF", bold: true })],
-      alignment: "center"
-    })
-  ]
-}),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
@@ -470,14 +470,14 @@ new TableCell({
       return new TableRow({
         children: [
           new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
- new TableCell({
-  children: [
-    new Paragraph({
-text: formatDate(entry.date),
-      alignment: "center",
-    }),
-  ],
-}),
+          new TableCell({
+            children: [
+              new Paragraph({
+                text: formatDate(entry.date),
+                alignment: "center",
+              }),
+            ],
+          }),
           new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
           new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
           new TableCell({ children: imageParagraphs }),
@@ -504,11 +504,11 @@ text: formatDate(entry.date),
             alignment: "left",
             spacing: { after: 50 }, // مسافة تحت
           }),
-          // Date  أعلى اليسار تحت Location
+          // Date (من - إلى) أعلى اليسار تحت Location
           new Paragraph({
             children: [
               new TextRun({
-text: `Date: ${formatDate(entries[0]?.date)}`,
+                text: `Date: ${periodStr}`,
                 bold: true,
                 size: 26,
                 color: "2563eb",
@@ -527,35 +527,33 @@ text: `Date: ${formatDate(entries[0]?.date)}`,
       },
     ],
   });
-// ... بعد Packer.toBlob(doc) داخل generateWordWithImages
 
-const blob    = await Packer.toBlob(doc);
-const badge = entries[0]?.badge || "UnknownBadge";
-const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
-const today = new Date();
-const dateString = today.toISOString().slice(0,10);
+  const blob    = await Packer.toBlob(doc);
+  const badge = entries[0]?.badge || "UnknownBadge";
+  const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
+  const today = new Date();
+  const dateString = today.toISOString().slice(0,10);
 
-const filename = `Photos_${assignedLocation}_${badge}_${dateString}.docx`;
+  const filename = `Photos_${assignedLocation}_${badge}_${dateString}.docx`;
 
+  // upload + download
+  let fileUrl;
+  try {
+    const badge = entries[0]?.badge;
+    fileUrl = await uploadReportBlob(blob, filename, badge);
+    console.log("Uploaded report to:", fileUrl);
+  } catch (err) {
+    console.error("Upload report failed", err);
+    alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
+  }
+  saveAs(blob, filename);
 
-// upload + download
-let fileUrl;
-try {
- const badge = entries[0]?.badge;
-fileUrl = await uploadReportBlob(blob, filename, badge);
-  console.log("Uploaded report to:", fileUrl);
-} catch (err) {
-  console.error("Upload report failed", err);
-  alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
-}
-saveAs(blob, filename);
-
-// تنظيف
-localStorage.removeItem("gsi_entries");
-localStorage.removeItem("gsi_badge");
-alert("Word file created. Saved data has been deleted.");
-
+  // تنظيف
+  localStorage.removeItem("gsi_entries");
+  localStorage.removeItem("gsi_badge");
+  alert("Word file created. Saved data has been deleted.");
 };
+
 
 function groupEntries(entries) {
   const groups = {};
