@@ -1448,7 +1448,7 @@ style={{
                     style={{ objectFit: "cover" }}
                   />
                    <button
-      onClick={() => handleDelete(idx)}
+  onClick={() => removeImage(idx, i)}
       style={{
         position: "absolute",
         top: -8,
