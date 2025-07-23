@@ -710,7 +710,7 @@ const generateWordPhotoNumbers = async () => {
   style={{
     minHeight: "100vh",
     width: "100%",
-    background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+     backgroundImage: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
     backgroundSize: "cover",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
@@ -908,7 +908,7 @@ const generateWordPhotoNumbers = async () => {
 style={{
   minHeight: "100vh",
   width: "100%",
-  background: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+   backgroundImage: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
   backgroundSize: "cover",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "center",
@@ -917,9 +917,9 @@ style={{
 >
   <div
     style={{
-      maxWidth: 800,
+      maxWidth: 1000,
       margin: "0 auto",
-      padding: "40px 10px"
+      padding: "40px 0px"
     }}
   >
         
@@ -928,25 +928,44 @@ style={{
   display: "flex",
   flexDirection: "column",
   alignItems: "center", // عشان الاسم تحت الصورة ومرتب
-  gap: 4,                // مسافة صغيرة بين الصورة والاسم
+  gap: 0,                // مسافة صغيرة بين الصورة والاسم
 }}>
-  <img
-    src="/gsi.png"
-    alt="Logo AI"
-    style={{
-      width: 90,
-      height: 90,
-      borderRadius: 12,
-      objectFit: "contain",
-    }}
+ <img
+        src="/ia.png"
+        alt="Logo AI"
+        style={{
+          position: "fixed",
+          top: isMobile ? 40 : 60,
+          left: isMobile ? 12 : 245,
+          width: isMobile ? 80 : 120,
+          height: isMobile ? 25 : 50,
+          borderRadius: isMobile ? 8 : 12,
+          objectFit: "contain",
+          zIndex: 10,
+        }}
+      />
+      <img
+        src="/gsi.png"
+        alt="Logo AI"
+        style={{
+          position: "fixed",
+          top: isMobile ? 10 : 20,
+          right: isMobile ? 190 : 245,
+          width: isMobile ? 70 : 120,
+          height: isMobile ? 55 : 90,
+          borderRadius: isMobile ? 8 : 12,
+          objectFit: "contain",
+          zIndex: 10,
+        }}
   />
+
   {userName && (
     <div
       style={{
         fontSize: 15,
         color: "#000000ff",
         fontWeight: "bold",
-        marginTop: 4,
+        marginTop: 12,
       }}
     >
       <span style={{ color: "#000000ff", fontWeight: "bold" }}>WELCOME, </span>
@@ -960,7 +979,7 @@ style={{
 
 <div style={{
   display: "flex",
-  gap: 12,
+  gap: 6,
   flexWrap: "wrap",
   justifyContent: "center",
   marginTop: 16,
@@ -1046,21 +1065,22 @@ style={{
     {/* Delete Button */}
     <button
       onClick={() => handleDelete(idx)}
-      style={{
-        position: "absolute",
-        top: 7,
-        right: 12,
-        background: "transparent",
-        border: "none",
-        color: "#e11d48",
-        fontSize: isMobile ? 28 : 24, // Larger on mobile for touch
-        cursor: "pointer",
-        width: isMobile ? 32 : 'auto',
-        height: isMobile ? 32 : 'auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
+  style={{
+    position: "absolute",
+    top: isMobile ? 10 : 16,
+    right: isMobile ? -170 : 16,
+    background: "transparent",
+    border: "none",
+    color: "#e11d48",
+    fontSize: isMobile ? 28 : 24,
+    cursor: "pointer",
+    width: isMobile ? 32 : "auto",
+    height: isMobile ? 32 : "auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 5, // تأكد أنه فوق كل شي
+  }}
       aria-label={`Delete observation ${idx + 1}`}
     >
   <span style={{fontWeight:"900", fontSize: isMobile ? 28 : 22, letterSpacing: 1}}>×</span>
