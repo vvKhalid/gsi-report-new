@@ -13,10 +13,11 @@ export default function LastReportsByEmployee({
     <>
       {employeeIds.map((id) => {
         const name = employeesMap[id] || id;
-        const { data, error } = useSWR(
-          `/api/blobs?employee=${encodeURIComponent(id)}&limit=${limit}`,
-          fetcher
-        );
+       const { data, error } = useSWR(
+  `/api?employee=${encodeURIComponent(id)}&limit=${limit}`,
+  fetcher
+);
+
 
         return (
           <section key={id} style={{ marginBottom: 32 }}>

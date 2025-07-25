@@ -103,7 +103,18 @@ const excelBtnStyle = {
   cursor: "pointer",
   transition: "background 0.2s",
 };
-
+const searchreportstyle = {
+  background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
+ color: "#fff",
+  fontWeight: 600,
+  border: "none",
+  borderRadius: 10,
+  fontSize: 12,
+  padding: "6px 6px",
+  boxShadow: "0 2px 8px #6366f140",
+  cursor: "pointer",
+  transition: "background 0.2s",
+};
 const lastReportsBtnStyle = {
   background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
   color: "#fff",
@@ -116,6 +127,30 @@ const lastReportsBtnStyle = {
   cursor: "pointer",
   transition: "background 0.2s",
 };
+function getNowDatetimeLocalRiyadh() {
+  const now = new Date();
+  // ما تضيف ولا تنقص! فقط خذ الوقت من جهاز المستخدم
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${min}`;
+}
+function formatDateTime(val) {
+  if (!val) return "—";
+  const d = new Date(val);
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  hours = hours.toString().padStart(2, "0");
+  // لا تحط فاصلة
+  return `${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("en-US", { month: "long" })} ${d.getFullYear()} - ${hours}:${minutes} ${ampm}`;
+}
+
+
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -125,7 +160,11 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
-
+function getNowDatetimeLocal() {
+  const now = new Date();
+  now.setSeconds(0, 0); // الدقائق فقط (بدون ثواني)
+  return now.toISOString().slice(0,16); // yyyy-MM-ddTHH:mm
+}
 // ====== دالة إنشاء منطقة فارغة للإحصائية ======
 function makeEmptyArea(name) {
   return {
@@ -266,6 +305,168 @@ async function sendToExcel(entries) {
 }
 
 
+function SearchReportPopup({ onClose }) {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // ⬅️ هنا ضيف متغيرات الصفحات
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(results.length / itemsPerPage);
+  const paginatedResults = results.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
+  // ⬅️ عشان يرجع لأول صفحة إذا تغيرت النتائج
+  useEffect(() => {
+    setPage(1);
+  }, [results]);
+  
+
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      // عدّل هذا حسب اسم حاويتك أو API لديك
+      const res = await fetch(`/api/searchReports?query=${encodeURIComponent(search)}`);
+      if (!res.ok) throw new Error("Failed to search.");
+      const data = await res.json();
+      setResults(data.reports); // [{name, url}]
+    } catch (err) {
+      alert("Error searching reports.");
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{
+      position: "fixed", zIndex: 200, left: 0, top: 0, width: "100vw", height: "100vh",
+      background: "rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center"
+    }}>
+      <div style={{
+        background: "#fff", borderRadius: 15, padding: 24, minWidth: 320, maxWidth: 400, boxShadow: "0 6px 24px #2563eb33"
+      }}>
+        <h3 style={{ color: "#2563eb", marginBottom: 12 }}>Search Reports</h3>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSearch()}
+          placeholder="Type report name or part of it"
+          style={{
+            width: "100%", fontSize: 16, padding: "10px", marginBottom: 10, borderRadius: 7, border: "1.3px solid #2563eb"
+          }}
+        />
+        <button
+          onClick={handleSearch}
+          style={{ ...mainBtnStyle, fontSize: 14, padding: "8px 16px", marginBottom: 10, width: "100%" }}>
+          {loading ? "Searching..." : "Search"}
+        </button>
+        <button
+          onClick={onClose}
+          style={{ ...mainBtnStyle, background: "#e11d48", fontSize: 14, padding: "8px 16px", marginBottom: 8, width: "100%" }}>
+          Close
+        </button>
+        <div>
+        <div>
+  <div>
+  {results.length === 0 && !loading ? (
+    <div style={{ color: "#888", textAlign: "center" }}>No results</div>
+  ) : null}
+
+  {paginatedResults.map((r, i) => (
+    <div
+      key={i}
+      style={{
+        margin: "10px 0",
+        padding: "10px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 7,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between"
+      }}
+    >
+      <span
+        style={{
+          wordBreak: "break-all",
+          color: "#111",
+          fontWeight: "bold",
+          fontSize: 16
+        }}
+      >
+        {r.name}
+      </span>
+      <a
+        href={r.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          background: "#2563eb",
+          color: "#fff",
+          borderRadius: 7,
+          padding: "4px 12px",
+          fontSize: 13,
+          marginLeft: 10,
+          textDecoration: "none"
+        }}
+      >
+        Download
+      </a>
+   
+    </div>
+  ))}
+
+  {/* أزرار الصفحات */}
+  <div style={{ display: "flex", justifyContent: "center", gap: 12, margin: "12px 0" }}>
+    <button
+      style={{
+        background: "#f1f5f9",
+        color: "#2563eb",
+        border: "1.2px solid #2563eb",
+        borderRadius: 7,
+        padding: "4px 15px",
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: page > 1 ? "pointer" : "not-allowed",
+        opacity: page > 1 ? 1 : 0.55,
+      }}
+      onClick={() => setPage((p) => Math.max(1, p - 1))}
+      disabled={page === 1}
+    >
+      Previous
+    </button>
+    <span style={{ color: "#2563eb", fontWeight: 700, fontSize: 15, alignSelf: "center" }}>
+      {page} / {totalPages || 1}
+    </span>
+    <button
+      style={{
+        background: "#f1f5f9",
+        color: "#2563eb",
+        border: "1.2px solid #2563eb",
+        borderRadius: 7,
+        padding: "4px 15px",
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: page < totalPages ? "pointer" : "not-allowed",
+        opacity: page < totalPages ? 1 : 0.55,
+      }}
+      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+      disabled={page === totalPages}
+    >
+      Next
+    </button>
+  </div>
+</div>
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function GSIReport() {
   const [entries, setEntries] = useState([
     {
@@ -279,7 +480,7 @@ export default function GSIReport() {
       status: "",
       risk: "",
       images: [],
-      date: ""
+    date: getNowDatetimeLocalRiyadh(),
     }  
   ]);
 const [isMobile, setIsMobile] = useState(false);
@@ -299,6 +500,7 @@ useEffect(() => {
   const handleDelete = (indexToDelete) => {
     setEntries((prevEntries) => prevEntries.filter((_, idx) => idx !== indexToDelete));
   };
+const [showSearchPopup, setShowSearchPopup] = useState(false);
 
   // مراقبة حجم الشاشة لتحديد هل الجهاز موبايل أم لا
   useEffect(() => {
@@ -378,7 +580,7 @@ const saveForLater = async () => {
       ...entries,
       {
         badge: last.badge || "",
-        date: last.date || "",
+      date: getNowDatetimeLocalRiyadh(),
         mainLocation: last.mainLocation || "",
         sideLocation: last.sideLocation || "",
         location: last.location || "",
@@ -415,22 +617,35 @@ const saveForLater = async () => {
     newEntries[entryIndex].images.splice(imageIndex, 1);
     setEntries(newEntries);
   };
+function toDateFixed(val) {
+  if (typeof val === "string" && val.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})$/)) {
+    return new Date(val + ":00");
+  }
+  return toDateFixed(val)
+;
+}
 
   // ملف مع الصور الحقيقية
 const generateWordWithImages = async () => {
   // استخراج جميع التواريخ
-  const allDates = entries.map(e => e.date).filter(Boolean).sort();
-  const from = allDates[0];
-  const to = allDates[allDates.length - 1];
+ const allDates = entries
+  .map(e => toDateFixed(e.date))
 
-  const formatDate = (date) => {
-    if (!date) return "—";
-    const d = new Date(date);
-    return `${d.getDate()} ${d.toLocaleString("en-US", { month: "long" })} - ${d.getFullYear()}`;
-  };
-  const periodStr = (from === to)
-    ? formatDate(from)
-    : `${formatDate(from)} to ${formatDate(to)}`;
+  .filter(d => d instanceof Date && !isNaN(d.valueOf()))
+  .sort((a, b) => a - b);
+
+const from = allDates[0];
+const to = allDates[allDates.length - 1];
+
+const formatDate = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.valueOf())) return "—";
+  return `${date.getDate()} ${date.toLocaleString("en-US", { month: "long" })} - ${date.getFullYear()}`;
+};
+
+const periodStr = (from && to && from.getTime() === to.getTime())
+  ? formatDate(from)
+  : `${formatDate(from)} to ${formatDate(to)}`;
+
 
   const tableRows = [
     new TableRow({
@@ -473,7 +688,8 @@ const generateWordWithImages = async () => {
           new TableCell({
             children: [
               new Paragraph({
-                text: formatDate(entry.date),
+                text: formatDateTime(entry.date),
+
                 alignment: "center",
               }),
             ],
@@ -528,13 +744,14 @@ const generateWordWithImages = async () => {
     ],
   });
 
-  const blob    = await Packer.toBlob(doc);
-  const badge = entries[0]?.badge || "UnknownBadge";
-  const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
-  const today = new Date();
-  const dateString = today.toISOString().slice(0,10);
+const blob = await Packer.toBlob(doc);
+const badge = entries[0]?.badge || "UnknownBadge";
+const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
+const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
+const today = new Date();
+const dateString = today.toISOString().slice(0,10);
 
-  const filename = `Photos_${assignedLocation}_${badge}_${dateString}.docx`;
+const filename = `Photos ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
   // upload + download
   let fileUrl;
@@ -572,6 +789,21 @@ function groupEntries(entries) {
   });
   return Object.values(groups);
 }
+function formatDateTime(val) {
+  if (!val) return "—";
+  const d = new Date(val);
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  hours = hours.toString().padStart(2, "0");
+  // لا تحط فاصلة
+  return `${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("en-US", { month: "long" })} ${d.getFullYear()} - ${hours}:${minutes} ${ampm}`;
+}
+
+
+
 
 const generateWordPhotoNumbers = async () => {
   // 1️⃣ أرسل كل Entry أولاً
@@ -583,7 +815,8 @@ const generateWordPhotoNumbers = async () => {
     return;
   }
 
-  // 2️⃣ دوال مساعدة
+
+  // 2️⃣ دوال مساعدة (نفس كودك القديم)
   const formatRangeForTable = (from, to) => {
     if (!from || !to) return '';
     const d1 = new Date(from), d2 = new Date(to);
@@ -602,86 +835,135 @@ const generateWordPhotoNumbers = async () => {
     return Object.values(map);
   };
 
-  // 3️⃣ جهّز صفوف الجدول مع ترقيم الصور وترقيم الصفوف (متسلسل)
+  // 3️⃣ إعداد صفوف الجدول مثل كودك
   let photoCounter = 1;
-  let rowNumber = 1; // ⬅️ هذا هو الحل، عرّف rowNumber هنا
+  let rowNumber = 1;
   const grouped = groupEntries(entries);
 
-  const tableRows = [
-    // header
-    new TableRow({
-      children: [
-        'No.','Date','Location',
-        'Assigned Inspection Location','Exact Location',
-        'Description of Observation','Attached Photo',
-        'Status of Finding','Risk/Priority'
-      ].map(txt => new TableCell({
-        shading:{fill:'4F81BD'},
-        children:[ new Paragraph({
-          children:[ new TextRun({text:txt,bold:true,color:'FFFFFF'}) ],
-          alignment:'center'
-        }) ]
-      }))
-    }),
-    // data
-    ...grouped.flatMap(group =>
-      group.map(e => {
-        let photoText = '';
-        if (e.images?.length) {
-          const start = photoCounter, end = photoCounter + e.images.length - 1;
-          photoText = e.images.length === 1
-            ? `Photo#${start}`
-            : `Photos#${start},${end}`;
-          photoCounter += e.images.length;
-        }
-        return new TableRow({
-          children: [
-            String(rowNumber++), // ترقيم متسلسل صحيح مهما تغير التاريخ
-            e.date ? new Date(e.date).toLocaleDateString("en-US", {
-              day: "numeric",
-              month: "long",
-              year: "numeric"
-            }) : "—",
-            e.mainLocation||'—',
-            e.sideLocation||'—',
-            e.exactLocation||'',
-            e.findings||'',
-            photoText,
-            e.status||'',
-            e.risk||''
-          ].map(val=>new TableCell({
-            children:[new Paragraph({text:val,alignment:'center'})]
-          }))
-        });
-      })
-    )
-  ];
+const tableRows = [
+  new TableRow({
+    children: [
+      'No.','Date / Time','Location',
+      'Assigned Inspection Location','Exact Location',
+      'Description of Observation','Attached Photo',
+      'Status of Finding','Risk/Priority'
+    ].map(txt => new TableCell({
+      shading: { fill: '4F81BD' },
+      children: [ new Paragraph({
+        children: [ new TextRun({
+          text: txt,
+          bold: true,
+          color: 'FFFFFF',
+          font: "Times New Roman",
+          size: 16 // حجم 8 (كل وحدة = نصف pt)
+        }) ],
+        alignment: 'center'
+      }) ]
+    }))
+  }),
+  ...grouped.flatMap(group =>
+    group.map(e => {
+      let photoText = '';
+      if (e.images?.length) {
+        const start = photoCounter, end = photoCounter + e.images.length - 1;
+        photoText = e.images.length === 1
+          ? `Photo#${start}`
+          : `Photos#${start},${end}`;
+        photoCounter += e.images.length;
+      }
+      return new TableRow({
+        children: [
+          String(rowNumber++),
+          formatDateTime(e.date),
+          e.mainLocation || '—',
+          e.sideLocation || '—',
+          e.exactLocation || '',
+          e.findings || '',
+          photoText,
+          e.status || '',
+          e.risk || ''
+        ].map(val => new TableCell({
+          children: [ new Paragraph({
+            children: [ new TextRun({
+              text: String(val),
+              font: "Times New Roman",
+              size: 16 // حجم 8
+            }) ],
+            alignment: 'center'
+          }) ]
+        }))
+      });
+    })
+  )
+];
+
 
   // 4️⃣ أنشئ وحمّل الـ Word
   const doc = new Document({
-    sections:[{
-      children:[
-        new Paragraph('We would like to bring to your kind attention the following observations noted by our representative from the General Services Inspection during the above-mentioned period;'),
-        new Paragraph(''),
-        new Table({ rows: tableRows, width: { size:100, type:'pct' } }),
-        new Paragraph(''),
-        new Paragraph('Please see the attached inspection photos for your easy reference.'),
-        new Paragraph('We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.'),
-        new Paragraph('Thank you for your usual cooperation.'),
-        new Paragraph('Best Regards.')
-      ]
-    }]
-  });
+  sections: [{
+    children: [
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'We would like to bring to your kind attention the following observations noted by our representative from the General Services Inspection during the above-mentioned period;',
+            font: "Times New Roman",
+            size: 16
+          })
+        ]
+      }),
+      new Paragraph(''),
+      new Table({ rows: tableRows, width: { size: 100, type: 'pct' } }),
+      new Paragraph(''),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Please see the attached inspection photos for your easy reference.',
+            font: "Times New Roman",
+            size: 16
+          })
+        ]
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.',
+            font: "Times New Roman",
+            size: 16
+          })
+        ]
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Thank you for your usual cooperation.',
+            font: "Times New Roman",
+            size: 16
+          })
+        ]
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Best Regards.',
+            font: "Times New Roman",
+            size: 16
+          })
+        ]
+      }),
+    ]
+  }]
+});
 
-  const blob = await Packer.toBlob(doc);
-  const badge = entries[0]?.badge || "UnknownBadge";
-  const assignedLocation = (entries[0]?.sideLocation || "UnknownLocation").replace(/\s+/g, "_");
-  const today = new Date();
-  const dateString = today.toISOString().slice(0,10);
+const blob = await Packer.toBlob(doc);
+const badge = entries[0]?.badge || "UnknownBadge";
+const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
+const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
+const today = new Date();
+const dateString = today.toISOString().slice(0,10);
 
-  const filename = `Report_${assignedLocation}_${badge}_${dateString}.docx`;
+const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
-  // 6️⃣ حاول ترفع الملف أولاً وخزّن الرابط
+   // 6️⃣ حاول ترفع الملف أولاً وخزّن الرابط
   let fileUrl;
   try {
     const badge = entries[0]?.badge;
@@ -692,16 +974,14 @@ const generateWordPhotoNumbers = async () => {
     // لو الرفع فشل ممكن تنبه المستخدم أو تستمر وتنزل الملف محلياً:
     alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
   }
-
-  // 7️⃣ نزّل الملف للمستخدم
+  // نزّل ملف الورد فقط (تحميل محلي)
   saveAs(blob, filename);
 
-  // 8️⃣ نظّف التخزين المحلي
+  // تنظيف التخزين المحلي
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
   alert("Word file created. Saved data has been deleted.");
 };
-
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
@@ -933,41 +1213,39 @@ style={{
  <img
         src="/ia.png"
         alt="Logo AI"
-        style={{
-          position: "fixed",
-          top: isMobile ? 40 : 60,
-          left: isMobile ? 12 : 245,
-          width: isMobile ? 80 : 120,
-          height: isMobile ? 25 : 50,
-          borderRadius: isMobile ? 8 : 12,
-          objectFit: "contain",
-          zIndex: 10,
-        }}
+     style={{
+        width: isMobile ? 80 : 110,
+        height: isMobile ? 72 : 100,
+        objectFit: "contain",
+        marginBottom: isMobile ? -20 : -26,
+      }}
       />
       <img
         src="/gsi.png"
         alt="Logo AI"
-        style={{
-          position: "fixed",
-          top: isMobile ? 10 : 20,
-          right: isMobile ? 190 : 245,
-          width: isMobile ? 70 : 120,
-          height: isMobile ? 55 : 90,
-          borderRadius: isMobile ? 8 : 12,
-          objectFit: "contain",
-          zIndex: 10,
-        }}
+    style={{
+        width: isMobile ? 110 : 150,
+        height: isMobile ? 72 : 100,
+        objectFit: "contain",
+        marginBottom: isMobile ? 6 :0,
+      }}
   />
 
   {userName && (
     <div
-      style={{
-        fontSize: 15,
-        color: "#000000ff",
-        fontWeight: "bold",
-        marginTop: 12,
-      }}
-    >
+style={{
+  color: "#ffe066", // ذهبي فاتح وواضح جدًا مع الأزرق
+  textShadow: "0 2px 16px #1d235b88, 0 1px 0 #0008", // ظل أزرق غامق + أسود خفيف يوضح الحروف
+  fontWeight: 900,
+  fontSize: 16,
+  margin: "20px 0 32px 0",
+  letterSpacing: "1.2px",
+  textAlign: "center",
+  textTransform: "uppercase", // كل الحروف كبيرة، تعطي وضوح أكثر
+  fontFamily: "Segoe UI, Arial, sans-serif",
+}}
+
+>
       <span style={{ color: "#000000ff", fontWeight: "bold" }}>WELCOME, </span>
       <span>{userName}</span>
     </div>
@@ -984,19 +1262,30 @@ style={{
   justifyContent: "center",
   marginTop: 16,
 }}>
+  {showSearchPopup && (
+  <SearchReportPopup onClose={() => setShowSearchPopup(false)} />
+)}
 
+<button style={searchreportstyle} onClick={() => setShowSearchPopup(true)}>
+  Search Reports
+</button>
+{showSearchPopup && (
+  <SearchReportPopup onClose={() => setShowSearchPopup(false)} />
+  
+)}
   {/* زر الإكسل */}
   <button
     style={{
-      background: "linear-gradient(90deg, #21c65e 0%, #34d399 100%)",
-      color: "#fff",
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 6px",
-      fontWeight: "bold",
-      fontSize: 12,
-      cursor: "pointer",
-      boxShadow: "0 2px 6px #21c65e66",
+   background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
+  color: "#fff",
+  fontWeight: 600,
+  border: "none",
+  borderRadius: 10,
+  fontSize: 12,
+  padding: "6px 6px",
+  boxShadow: "0 2px 8px #6366f140",
+  cursor: "pointer",
+  transition: "background 0.2s",
     }}
     onClick={() =>
       window.open(
@@ -1005,7 +1294,7 @@ style={{
       )
     }
   >
-    Open Excel Sheet
+     Excel Sheet
   </button>
 
   {/* زر Last Reports */}
@@ -1020,23 +1309,7 @@ style={{
   <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
 )}
 
-  {/* زر Reload */}
-  <button
-    onClick={() => window.location.reload()}
-    style={{
-      background: "#e11d48",
-      color: "#fff",
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 6px",
-      fontWeight: "bold",
-      fontSize: 12,
-      cursor: "pointer",
-      boxShadow: "0 2px 6px #e11d4844",
-    }}
-  >
-    Reload
-  </button>
+
 </div>
 
 
@@ -1045,7 +1318,7 @@ style={{
           
         </div>
         {/* Observations */}
-   {/* Fixed version of your form with proper mobile responsiveness */}
+  
 {entries.map((entry, idx) => (
   <div
     key={idx}
@@ -1068,7 +1341,7 @@ style={{
   style={{
     position: "absolute",
     top: isMobile ? 10 : 16,
-    right: isMobile ? -170 : 16,
+    right: isMobile ? -160 : 16,
     background: "transparent",
     border: "none",
     color: "#e11d48",
@@ -1090,7 +1363,7 @@ style={{
     <div style={{ 
       display: "flex", 
       flexDirection: isMobile ? "column" : "row", 
-      gap: isMobile ? 16 : 12, 
+      gap: isMobile ? 16 : 14, 
       marginBottom: 16 
     }}>
       <div style={{ flex: isMobile ? "none" : "1 1 150px" }}>
@@ -1101,18 +1374,21 @@ style={{
           fontSize: isMobile ? 16 : 14,
           fontWeight: 600
         }}>Date</label>
-        <input
-          type="date"
-          value={entry.date}
-          onChange={e => updateEntry(idx, "date", e.target.value)}
-          style={{
-            ...inputStyle,
-            width: "100%",
-            fontSize: isMobile ? 16 : 14, // Prevents zoom on iOS
-            padding: isMobile ? "12px" : "8px 12px",
-            boxSizing: "border-box"
-          }}
-        />
+<input
+  type="datetime-local"
+  value={entry.date || getNowDatetimeLocalRiyadh()}
+  onChange={e => updateEntry(idx, "date", e.target.value)}
+  style={{
+    ...inputStyle,
+    width: "100%",
+    fontSize: isMobile ? 16 : 14,
+    padding: isMobile ? "6px 8px" : "8px 12px",
+    height: isMobile ? 40 : 32,
+    boxSizing: "border-box"
+  }}
+/>
+
+\
       </div>
       
       <div style={{ flex: isMobile ? "none" : "2 1 220px" }}>
@@ -1428,6 +1704,7 @@ style={{
         />
       </div>
 
+
       {/* Image Previews */}
       {entry.images && entry.images.length > 0 && (
         <div style={{ 
@@ -1487,10 +1764,12 @@ style={{
     >
   <span style={{fontWeight:"900", fontSize: isMobile ? 28 : 22, letterSpacing: 1}}>×</span>
     </button>
+    
                 </div>
               );
             })}
           </div>
+  
         </div>
       )}
     </div>
@@ -1504,6 +1783,19 @@ style={{
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
           <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save you can add them later)</button>
         </div>
+                <div
+  style={{
+    width: "100%",
+    textAlign: "center",
+    color: "#64748b",
+    fontSize: 13,
+    margin: "24px 0 8px 0",
+    opacity: 0.7,
+    letterSpacing: ".03em",
+  }}
+>
+  Developed & Designed by Khalid Al Mutairi ©  
+</div>
         {/* Popup الإحصائيات */}
         {showStats && (
           <StatisticsPopup onClose={() => setShowStats(false)} />
