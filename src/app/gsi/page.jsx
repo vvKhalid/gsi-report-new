@@ -955,8 +955,7 @@ const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateStr
     console.log("Uploaded report to:", fileUrl);
   } catch (err) {
     console.error("Upload report failed", err);
-    // لو الرفع فشل ممكن تنبه المستخدم أو تستمر وتنزل الملف محلياً:
-    alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
+ 
   }
   // نزّل ملف الورد فقط (تحميل محلي)
   saveAs(blob, filename);
@@ -966,11 +965,6 @@ const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateStr
   localStorage.removeItem("gsi_badge");
   alert("Word file created. Saved data has been deleted.");
 };
-// تحت generateWordWithImages مباشرة
-async function generateBothReports() {
-  await generateWordPhotoNumbers(); // E-CTS
-  await generateWordWithImages();   // Photos
-}
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
@@ -1223,8 +1217,8 @@ style={{
   {userName && (
     <div
 style={{
-  color: "#ffe066", // ذهبي فاتح وواضح جدًا مع الأزرق
-  textShadow: "0 2px 16px #1d235b88, 0 1px 0 #0008", // ظل أزرق غامق + أسود خفيف يوضح الحروف
+  color: "#86d89aff", 
+  textShadow: "0 2px 16px #070255ff, 0 1px 0 #0008", // ظل أزرق غامق + أسود خفيف يوضح الحروف
   fontWeight: 900,
   fontSize: 16,
   margin: "20px 0 32px 0",
@@ -1241,7 +1235,7 @@ style={{
   )}
     
   
-        {/* وسط: عنوان + اسم المستخدم */}
+        {/* user name and subject*/}
  <div style={{ flex: 1, textAlign: "center", alignSelf: "center" }}>
 
 <div style={{
@@ -1262,7 +1256,7 @@ style={{
   <SearchReportPopup onClose={() => setShowSearchPopup(false)} />
   
 )}
-  {/* زر الإكسل */}
+  {/* Excel button */}
   <button
     style={{
    background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
@@ -1324,7 +1318,7 @@ style={{
       boxSizing: "border-box", // Important: prevents padding from adding to width
     }}
   >
-      {/* رقم الملاحظة */}
+      {/* obs number*/}
     <div style={{
       position: "absolute",
       top: -12,
@@ -1782,9 +1776,8 @@ style={{
         {/* الأزرار */}
         <div style={{ display: "flex", gap: 13, justifyContent: "center", marginTop: 15, flexWrap: "wrap" }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
-      <button style={mainBtnStyle} onClick={generateBothReports}>
-  Generate & Download (E-CTS + Photos)
-</button>
+          <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word (E-CTS)</button>
+          <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (Photos)</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
           <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save you can add them later)</button>
         </div>
