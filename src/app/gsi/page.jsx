@@ -642,22 +642,22 @@ const formatDate = (date) => {
   return `${date.getDate()} ${date.toLocaleString("en-US", { month: "long" })} - ${date.getFullYear()}`;
 };
 
-const periodStr = (from && to && from.getTime() === to.getTime())
+const sameDay = from && to && from.toDateString() === to.toDateString();
+
+const periodStr = sameDay
   ? formatDate(from)
   : `${formatDate(from)} to ${formatDate(to)}`;
-
 
   const tableRows = [
     new TableRow({
       children: [
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Date", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Description of Observation", color: "FFFFFF", bold: true })], alignment: "center" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "left" })] }),
+        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "left" })] }),
         new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
       ],
     }),
-    ...(await Promise.all(entries.map(async (entry, index) => {
+ ...(await Promise.all(entries.map(async (entry, index) => {
+      // جمع كل الصور في نفس الخلية (كل صورة فقرة جديدة)
       let imageParagraphs = [];
       if (entry.images && entry.images.length > 0) {
         for (let i = 0; i < entry.images.length; i++) {
@@ -672,10 +672,10 @@ const periodStr = (from && to && from.getTime() === to.getTime())
               children: [
                 new ImageRun({
                   data: Uint8Array.from(atob(imgBase64), c => c.charCodeAt(0)),
-                  transformation: { width: 120, height: 70 }
+                  transformation: { width: 640, height: 340 } // تكبير الصورة
                 })
               ],
-              alignment: "center"
+              alignment: "left"
             })
           );
         }
@@ -684,18 +684,8 @@ const periodStr = (from && to && from.getTime() === to.getTime())
       }
       return new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "center" })] }),
-          new TableCell({
-            children: [
-              new Paragraph({
-                text: formatDateTime(entry.date),
-
-                alignment: "center",
-              }),
-            ],
-          }),
-          new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "center" })] }),
-          new TableCell({ children: [new Paragraph({ text: entry.findings, alignment: "center" })] }),
+          new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "left" })] }),
+          new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "left" })] }),
           new TableCell({ children: imageParagraphs }),
         ],
       });
@@ -703,24 +693,28 @@ const periodStr = (from && to && from.getTime() === to.getTime())
     )
   ];
 
+  // تقليل الهوامش
   const doc = new Document({
     sections: [
       {
+        properties: {
+          page: {
+            margin: { top: 400, right: 400, bottom: 400, left: 400 } // تقليل الهوامش
+          }
+        },
         children: [
-          // Location أعلى اليسار
           new Paragraph({
             children: [
               new TextRun({
-                text: `Location: ${entries[0]?.mainLocation || ""}${entries[0]?.sideLocation ? " - " + entries[0]?.sideLocation : ""}`,
+                text: `Location: ${entries[0]?.sideLocation || ""}`,
                 bold: true,
-                size: 28, // حجم أكبر
-                color: "2563eb", // أزرق
+                size: 28,
+                color: "2563eb",
               }),
             ],
             alignment: "left",
-            spacing: { after: 50 }, // مسافة تحت
+            spacing: { after: 50 },
           }),
-          // Date (من - إلى) أعلى اليسار تحت Location
           new Paragraph({
             children: [
               new TextRun({
@@ -733,8 +727,6 @@ const periodStr = (from && to && from.getTime() === to.getTime())
             alignment: "left",
             spacing: { after: 120 },
           }),
-
-          // الجدول الرئيسي
           new Table({
             rows: tableRows,
             width: { size: 100, type: "pct" }
@@ -744,28 +736,21 @@ const periodStr = (from && to && from.getTime() === to.getTime())
     ],
   });
 
-const blob = await Packer.toBlob(doc);
-const badge = entries[0]?.badge || "UnknownBadge";
-const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
-const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
-const today = new Date();
-const dateString = today.toISOString().slice(0,10);
+  const blob = await Packer.toBlob(doc);
+  const badge = entries[0]?.badge || "UnknownBadge";
+  const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
+  const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
+  const today = new Date();
+  const dateString = today.toISOString().slice(0, 10);
 
-const filename = `Photos ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
+  const filename = `Photos ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
-  // upload + download
   let fileUrl;
   try {
-    const badge = entries[0]?.badge;
     fileUrl = await uploadReportBlob(blob, filename, badge);
-    console.log("Uploaded report to:", fileUrl);
-  } catch (err) {
-    console.error("Upload report failed", err);
-    alert("تعذّر رفع التقرير إلى السحابة، سيتم تنزيله محلياً فقط.");
-  }
+  } catch (err) { /* رفع فقط */ }
   saveAs(blob, filename);
 
-  // تنظيف
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
   alert("Word file created. Saved data has been deleted.");
@@ -798,7 +783,7 @@ function formatDateTime(val) {
   hours = hours % 12;
   hours = hours ? hours : 12;
   hours = hours.toString().padStart(2, "0");
-  // لا تحط فاصلة
+ 
   return `${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("en-US", { month: "long" })} ${d.getFullYear()} - ${hours}:${minutes} ${ampm}`;
 }
 
@@ -843,7 +828,7 @@ const generateWordPhotoNumbers = async () => {
 const tableRows = [
   new TableRow({
     children: [
-      'No.','Date / Time','Location',
+      'No.','Date / Time',
       'Assigned Inspection Location','Exact Location',
       'Description of Observation','Attached Photo',
       'Status of Finding','Risk/Priority'
@@ -875,7 +860,6 @@ const tableRows = [
         children: [
           String(rowNumber++),
           formatDateTime(e.date),
-          e.mainLocation || '—',
           e.sideLocation || '—',
           e.exactLocation || '',
           e.findings || '',
@@ -982,6 +966,11 @@ const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateStr
   localStorage.removeItem("gsi_badge");
   alert("Word file created. Saved data has been deleted.");
 };
+// تحت generateWordWithImages مباشرة
+async function generateBothReports() {
+  await generateWordPhotoNumbers(); // E-CTS
+  await generateWordWithImages();   // Photos
+}
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
@@ -1335,6 +1324,21 @@ style={{
       boxSizing: "border-box", // Important: prevents padding from adding to width
     }}
   >
+      {/* رقم الملاحظة */}
+    <div style={{
+      position: "absolute",
+      top: -12,
+      left: 16,
+      background: "#2563eb",
+      color: "#fff",
+      borderRadius: "8px",
+      padding: "4px 10px",
+      fontSize: 14,
+      fontWeight: "bold",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+    }}>
+      #{idx + 1}
+    </div>
     {/* Delete Button */}
     <button
       onClick={() => handleDelete(idx)}
@@ -1778,8 +1782,9 @@ style={{
         {/* الأزرار */}
         <div style={{ display: "flex", gap: 13, justifyContent: "center", marginTop: 15, flexWrap: "wrap" }}>
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
-          <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word</button>
-          <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (with Photos)</button>
+      <button style={mainBtnStyle} onClick={generateBothReports}>
+  Generate & Download (E-CTS + Photos)
+</button>
           <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
           <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save you can add them later)</button>
         </div>
@@ -1911,6 +1916,7 @@ const generateStatsWord = async () => {
   const blob = await Packer.toBlob(doc);
   saveAs(blob, "GSI_Areas_Statistics.docx");
 };
+
 
   return (
     <div style={statsPopupStyle}>
