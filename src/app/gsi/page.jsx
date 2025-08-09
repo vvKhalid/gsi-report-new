@@ -753,7 +753,7 @@ const periodStr = sameDay
 
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
-  alert("Word file created. Saved data has been deleted.");
+
 };
 
 
@@ -963,7 +963,7 @@ const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateStr
   // تنظيف التخزين المحلي
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
-  alert("Word file created. Saved data has been deleted.");
+ 
 };
 
   // شاشة تسجيل الدخول
