@@ -626,135 +626,170 @@ function toDateFixed(val) {
 }
 
   // ملف مع الصور الحقيقية
+// ملف مع الصور الحقيقية (جدولين + ترقيم ثابت)
+// ملف مع الصور الحقيقية (Outstanding ثم Rectified) مع ترقيم مستمر
+// ملف الصور الحقيقية (Outstanding ثم Rectified) مع ترقيم مستمر ومضمون
 const generateWordWithImages = async () => {
-  // استخراج جميع التواريخ
- const allDates = entries
-  .map(e => toDateFixed(e.date))
-
-  .filter(d => d instanceof Date && !isNaN(d.valueOf()))
-  .sort((a, b) => a - b);
-
-const from = allDates[0];
-const to = allDates[allDates.length - 1];
-
-const formatDate = (date) => {
-  if (!date || !(date instanceof Date) || isNaN(date.valueOf())) return "—";
-  return `${date.getDate()} ${date.toLocaleString("en-US", { month: "long" })} - ${date.getFullYear()}`;
-};
-
-const sameDay = from && to && from.toDateString() === to.toDateString();
-
-const periodStr = sameDay
-  ? formatDate(from)
-  : `${formatDate(from)} to ${formatDate(to)}`;
-
-  const tableRows = [
-    new TableRow({
-      children: [
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "No.", color: "FFFFFF", bold: true })], alignment: "left" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true })], alignment: "left" })] }),
-        new TableCell({ shading: { fill: "4F81BD" }, children: [new Paragraph({ children: [new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true })], alignment: "center" })] }),
-      ],
-    }),
- ...(await Promise.all(entries.map(async (entry, index) => {
-      // جمع كل الصور في نفس الخلية (كل صورة فقرة جديدة)
-      let imageParagraphs = [];
-      if (entry.images && entry.images.length > 0) {
-        for (let i = 0; i < entry.images.length; i++) {
-          const imgFile = entry.images[i];
-          const imgBase64 = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result.split(",")[1]);
-            reader.readAsDataURL(imgFile);
-          });
-          imageParagraphs.push(
-            new Paragraph({
-              children: [
-                new ImageRun({
-                  data: Uint8Array.from(atob(imgBase64), c => c.charCodeAt(0)),
-                  transformation: { width: 640, height: 340 } // تكبير الصورة
-                })
-              ],
-              alignment: "left"
-            })
-          );
-        }
-      } else {
-        imageParagraphs.push(new Paragraph({ text: "" }));
-      }
-      return new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph({ text: String(index + 1), alignment: "left" })] }),
-          new TableCell({ children: [new Paragraph({ text: entry.exactLocation || "—", alignment: "left" })] }),
-          new TableCell({ children: imageParagraphs }),
-        ],
-      });
-    }))
-    )
-  ];
-
-  // تقليل الهوامش
-  const doc = new Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            margin: { top: 400, right: 400, bottom: 400, left: 400 } // تقليل الهوامش
-          }
-        },
-        children: [
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `Location: ${entries[0]?.sideLocation || ""}`,
-                bold: true,
-                size: 28,
-                color: "2563eb",
-              }),
-            ],
-            alignment: "left",
-            spacing: { after: 50 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `Date: ${periodStr}`,
-                bold: true,
-                size: 26,
-                color: "2563eb",
-              }),
-            ],
-            alignment: "left",
-            spacing: { after: 120 },
-          }),
-          new Table({
-            rows: tableRows,
-            width: { size: 100, type: "pct" }
-          }),
-        ],
-      },
-    ],
+  // 1) فرز مستقر حسب التاريخ (الفارغ يروح آخر شيء) مع كسر تعادل بالفهرس الأصلي
+  const withIndex = entries.map((e, i) => ({ ...e, _i: i }));
+  withIndex.sort((a, b) => {
+    const ta = Date.parse(a.date);
+    const tb = Date.parse(b.date);
+    const va = Number.isNaN(ta) ? Infinity : ta;
+    const vb = Number.isNaN(tb) ? Infinity : tb;
+    if (va !== vb) return va - vb;
+    return a._i - b._i;
   });
 
+  // 2) تقسيم بعد الفرز
+  const unresolved = withIndex.filter(e => e.status !== "Rectified");
+  const resolved   = withIndex.filter(e => e.status === "Rectified");
+
+  // 3) أرقام تسلسلية ثابتة (مستمرة من الجدول الأول للثاني)
+  const unresolvedSeq = unresolved.map((e, i) => ({ ...e, _seq: i + 1 }));
+  const resolvedSeq   = resolved.map((e, i) => ({ ...e, _seq: unresolvedSeq.length + i + 1 }));
+
+  // 4) مُنشئ جدول يستخدم الرقم الثابت _seq ويضبط المحاذاة للوسط
+  const buildTable = async (data) => {
+    const header = new TableRow({
+      height: { value: 500, rule: "atLeast" },
+      children: [
+        new TableCell({
+          width: { size: 8, type: "pct" },
+          shading: { fill: "4F81BD" },
+          verticalAlign: "center",
+          children: [ new Paragraph({
+            alignment: "center",
+            children: [ new TextRun({ text: "No.", color: "FFFFFF", bold: true, font: "Times New Roman", size: 16 }) ]
+          }) ]
+        }),
+        new TableCell({
+          width: { size: 22, type: "pct" },
+          shading: { fill: "4F81BD" },
+          verticalAlign: "center",
+          children: [ new Paragraph({
+            alignment: "center",
+            children: [ new TextRun({ text: "Exact Location", color: "FFFFFF", bold: true, font: "Times New Roman", size: 16 }) ]
+          }) ]
+        }),
+        new TableCell({
+          width: { size: 70, type: "pct" },
+          shading: { fill: "4F81BD" },
+          verticalAlign: "center",
+          children: [ new Paragraph({
+            alignment: "center",
+            children: [ new TextRun({ text: "Attached Photo", color: "FFFFFF", bold: true, font: "Times New Roman", size: 16 }) ]
+          }) ]
+        }),
+      ],
+    });
+
+    const rows = await Promise.all(
+      data.map(async (entry) => {
+        const imageParagraphs = [];
+
+        if (entry.images && entry.images.length > 0) {
+          for (const imgFile of entry.images) {
+            const imgBase64 = await new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onload = e => resolve(e.target.result.split(",")[1]);
+              reader.readAsDataURL(imgFile);
+            });
+            imageParagraphs.push(
+              new Paragraph({
+                alignment: "center",
+                children: [
+                  new ImageRun({
+                    data: Uint8Array.from(atob(imgBase64), c => c.charCodeAt(0)),
+                    transformation: { width: 540, height: 300 }
+                  })
+                ]
+              })
+            );
+          }
+        } else {
+          imageParagraphs.push(new Paragraph({ text: "" }));
+        }
+
+        return new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 8, type: "pct" },
+              verticalAlign: "center",
+              children: [ new Paragraph({ alignment: "center", children: [ new TextRun(String(entry._seq)) ] }) ]
+            }),
+            new TableCell({
+              width: { size: 22, type: "pct" },
+              verticalAlign: "center",
+              children: [ new Paragraph({ alignment: "center", children: [ new TextRun(entry.exactLocation || "—") ] }) ]
+            }),
+            new TableCell({
+              width: { size: 70, type: "pct" },
+              verticalAlign: "center",
+              children: imageParagraphs
+            }),
+          ]
+        });
+      })
+    );
+
+    return [header, ...rows];
+  };
+
+  const unresolvedRows = await buildTable(unresolvedSeq);
+  const resolvedRows   = await buildTable(resolvedSeq);
+
+  // 5) رأس الصفحة
+  const locationPara = new Paragraph({
+    children: [ new TextRun({ text: `Location: ${entries[0]?.sideLocation || ""}`, bold: true, size: 28, color: "2563eb" }) ],
+    spacing: { after: 50 },
+  });
+  const datePara = new Paragraph({
+    children: [ new TextRun({ text: `Date: ${new Date().toLocaleDateString("en-US")}`, bold: true, size: 26, color: "2563eb" }) ],
+    spacing: { after: 120 },
+  });
+
+  // 6) بناء المستند
+  const doc = new Document({
+    sections: [{
+      properties: { page: { margin: { top: 400, right: 400, bottom: 400, left: 400 } } },
+      children: [
+        locationPara,
+        datePara,
+
+        new Paragraph({
+          children: [ new TextRun({ text: "Outstanding Observations:", font: "Times New Roman", bold: true, size: 20 }) ],
+          spacing: { after: 200 }
+        }),
+        new Table({ rows: unresolvedRows, width: { size: 100, type: "pct" } }),
+        new Paragraph(""),
+
+
+
+        new Paragraph({
+          children: [ new TextRun({ text: "Rectified Observations:", font: "Times New Roman", bold: true, size: 20 }) ],
+          spacing: { after: 200 }
+        }),
+        new Table({ rows: resolvedRows, width: { size: 100, type: "pct" } }),
+        new Paragraph(""),
+      ]
+    }]
+  });
+
+  // 7) حفظ الملف
   const blob = await Packer.toBlob(doc);
   const badge = entries[0]?.badge || "UnknownBadge";
   const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
   const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
-  const today = new Date();
-  const dateString = today.toISOString().slice(0, 10);
+  const dateString = new Date().toISOString().slice(0, 10);
+  const filename = `PhotosReport ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
-  const filename = `Photos ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
-
-  let fileUrl;
-  try {
-    fileUrl = await uploadReportBlob(blob, filename, badge);
-  } catch (err) { /* رفع فقط */ }
+  try { await uploadReportBlob(blob, filename, badge); } catch {}
   saveAs(blob, filename);
-
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
-
 };
+
 
 
 function groupEntries(entries) {
@@ -791,7 +826,7 @@ function formatDateTime(val) {
 
 
 const generateWordPhotoNumbers = async () => {
-  // 1️⃣ أرسل كل Entry أولاً
+  // 1️⃣ أولاً: أرسل البيانات إلى الإكسل
   try {
     await sendToExcel(entries);
   } catch (err) {
@@ -800,171 +835,125 @@ const generateWordPhotoNumbers = async () => {
     return;
   }
 
+  // 2️⃣ تقسيم الملاحظات
+  const unresolved = entries.filter(e => e.status !== "Rectified");
+  const resolved   = entries.filter(e => e.status === "Rectified");
 
-  // 2️⃣ دوال مساعدة (نفس كودك القديم)
-  const formatRangeForTable = (from, to) => {
-    if (!from || !to) return '';
-    const d1 = new Date(from), d2 = new Date(to);
-    const m = d1.toLocaleString('en-US',{month:'long'}), y=d1.getFullYear();
-    return d1.getTime()===d2.getTime()
-      ? `${d1.getDate()} ${m} - ${y}`
-      : `${d1.getDate()} to ${d2.getDate()} ${m} - ${y}`;
-  };
-  const groupEntries = arr => {
-    const map = {};
-    arr.forEach(e => {
-      const key = [e.date, e.mainLocation, e.sideLocation].join('__');
-      map[key] = map[key]||[];
-      map[key].push(e);
+  // 3️⃣ دوال مساعدة
+  const buildTable = (data, startRowNumber, startPhotoCounter) => {
+    let rowNumber = startRowNumber;
+    let photoCounter = startPhotoCounter;
+
+    const header = new TableRow({
+      children: [
+        "No.","Date / Time","Exact Location","Description of Observation",
+        "Attached Photo","Status of Finding","Risk/Priority"
+      ].map(h => new TableCell({
+        shading: { fill: "4F81BD" },
+        children: [ new Paragraph({
+          children: [ new TextRun({ text: h, bold: true, color: "FFFFFF", font: "Times New Roman", size: 18 }) ],
+          alignment: "center"
+        }) ]
+      }))
     });
-    return Object.values(map);
-  };
 
-  // 3️⃣ إعداد صفوف الجدول مثل كودك
-  let photoCounter = 1;
-  let rowNumber = 1;
-  const grouped = groupEntries(entries);
-
-const tableRows = [
-  new TableRow({
-    children: [
-      'No.','Date / Time',
-      'Assigned Inspection Location','Exact Location',
-      'Description of Observation','Attached Photo',
-      'Status of Finding','Risk/Priority'
-    ].map(txt => new TableCell({
-      shading: { fill: '4F81BD' },
-      children: [ new Paragraph({
-        children: [ new TextRun({
-          text: txt,
-          bold: true,
-          color: 'FFFFFF',
-          font: "Times New Roman",
-          size: 16 // حجم 8 (كل وحدة = نصف pt)
-        }) ],
-        alignment: 'center'
-      }) ]
-    }))
-  }),
-  ...grouped.flatMap(group =>
-    group.map(e => {
-      let photoText = '';
+    const rows = data.map(e => {
+      let photoText = "";
       if (e.images?.length) {
-        const start = photoCounter, end = photoCounter + e.images.length - 1;
-        photoText = e.images.length === 1
-          ? `Photo#${start}`
-          : `Photos#${start},${end}`;
+        const start = photoCounter;
+        const end = photoCounter + e.images.length - 1;
+        photoText = e.images.length === 1 ? `Photo#${start}` : `Photos#${start}-${end}`;
         photoCounter += e.images.length;
       }
       return new TableRow({
         children: [
           String(rowNumber++),
           formatDateTime(e.date),
-          e.sideLocation || '—',
-          e.exactLocation || '',
-          e.findings || '',
+          e.exactLocation || "—",
+          e.findings || "—",
           photoText,
-          e.status || '',
-          e.risk || ''
+          e.status || "—",
+          e.risk || "—"
         ].map(val => new TableCell({
-          children: [ new Paragraph({
-            children: [ new TextRun({
-              text: String(val),
-              font: "Times New Roman",
-              size: 16 // حجم 8
-            }) ],
-            alignment: 'center'
-          }) ]
+          children: [ new Paragraph({ children: [ new TextRun({ text: String(val), font: "Times New Roman", size: 18 }) ], alignment: "center" }) ]
         }))
       });
-    })
-  )
-];
+    });
 
+    return { rows: [header, ...rows], lastRow: rowNumber, lastPhoto: photoCounter };
+  };
 
-  // 4️⃣ أنشئ وحمّل الـ Word
+  // 4️⃣ بناء الجدولين
+  const unresolvedTable = buildTable(unresolved, 1, 1);
+  const resolvedTable   = buildTable(resolved, unresolvedTable.lastRow, unresolvedTable.lastPhoto);
+
+  // 5️⃣ إنشاء المستند
   const doc = new Document({
-  sections: [{
-    children: [
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'We would like to bring to your kind attention the following observations noted by our representative from the General Services Inspection during the above-mentioned period;',
-            font: "Times New Roman",
-            size: 16
-          })
-        ]
-      }),
-      new Paragraph(''),
-      new Table({ rows: tableRows, width: { size: 100, type: 'pct' } }),
-      new Paragraph(''),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'Please see the attached inspection photos for your easy reference.',
-            font: "Times New Roman",
-            size: 16
-          })
-        ]
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'We would appreciate your feedback on action/s taken regarding the above observations within five (05) days of receiving this memorandum.',
-            font: "Times New Roman",
-            size: 16
-          })
-        ]
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'Thank you for your usual cooperation.',
-            font: "Times New Roman",
-            size: 16
-          })
-        ]
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'Best Regards.',
-            font: "Times New Roman",
-            size: 16
-          })
-        ]
-      }),
-    ]
-  }]
-});
+    sections: [{
+      children: [
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: 'We would like to bring to your kind attention the following observations noted by our representative from the General Services Inspection during the above-mentioned period;',
+              font: "Times New Roman",
+              size: 18
+            })
+          ]
+        }),
+        new Paragraph(''),
+        new Table({ rows: unresolvedTable.rows, width: { size: 100, type: 'pct' } }),
+        new Paragraph(''),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: 'Also, we would like to express our thanks and appreciation for the response and rectification of the following observations noted in the recent rounds;',
+              font: "Times New Roman",
+              size: 18
+            })
+          ]
+        }),
+        new Paragraph(''),
+        new Table({ rows: resolvedTable.rows, width: { size: 100, type: 'pct' } }),
+        new Paragraph(''),
+        new Paragraph({
+          children: [ new TextRun({ text: 'Please see the attached inspection photos for your easy reference.', font: "Times New Roman", size: 18 }) ]
+        }),
+        new Paragraph({
+          children: [ new TextRun({ text: 'We would appreciate your feedback on action/s taken regarding the unsolved observations within five (05) business days of receiving this memorandum.', font: "Times New Roman", size: 18 }) ]
+        }),
+        new Paragraph({
+          children: [ new TextRun({ text: 'Thank you for your usual cooperation.', font: "Times New Roman", size: 18 }) ]
+        }),
+        new Paragraph({
+          children: [ new TextRun({ text: 'Best Regards.', font: "Times New Roman", size: 18 }) ]
+        }),
+      ]
+    }]
+  });
 
-const blob = await Packer.toBlob(doc);
-const badge = entries[0]?.badge || "UnknownBadge";
-const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
-const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
-const today = new Date();
-const dateString = today.toISOString().slice(0,10);
+  // 6️⃣ حفظ الملف
+  const blob = await Packer.toBlob(doc);
+  const badge = entries[0]?.badge || "UnknownBadge";
+  const assignedLocation = entries[0]?.sideLocation || "UnknownLocation";
+  const exactLocation = entries[0]?.exactLocation || "UnknownExactLocation";
+  const today = new Date();
+  const dateString = today.toISOString().slice(0,10);
 
-const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
+  const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
-   // 6️⃣ حاول ترفع الملف أولاً وخزّن الرابط
-  let fileUrl;
   try {
     const badge = entries[0]?.badge;
-    fileUrl = await uploadReportBlob(blob, filename, badge);
-    console.log("Uploaded report to:", fileUrl);
+    await uploadReportBlob(blob, filename, badge);
   } catch (err) {
     console.error("Upload report failed", err);
- 
   }
-  // نزّل ملف الورد فقط (تحميل محلي)
+
   saveAs(blob, filename);
 
-  // تنظيف التخزين المحلي
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
- 
 };
+
 
   // شاشة تسجيل الدخول
   if (!loggedIn) {
