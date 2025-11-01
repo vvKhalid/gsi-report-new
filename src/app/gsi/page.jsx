@@ -2,18 +2,10 @@
 import { useState, useEffect } from "react";
 import { saveAs } from "file-saver";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun,ImageRun,BorderStyle } from "docx";
-
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { uploadReportBlob, uploadImageBlob } from "./lib/storage";
-import { employeesMap } from "@/data/employees";
-import LastReportsPopup from "@/components/LastReportsPopup";
-import { Analytics } from "@vercel/analytics/next"
-import { useRouter } from "next/navigation";
 import React from "react";
 import '../globals.css';
-
-
 
 
 const containerStyle = {
@@ -166,21 +158,7 @@ function getNowDatetimeLocal() {
   return now.toISOString().slice(0,16); // yyyy-MM-ddTHH:mm
 }
 // ====== دالة إنشاء منطقة فارغة للإحصائية ======
-function makeEmptyArea(name) {
-  return {
-    name,
-    stats: [
-      { key: "rooms", label: "Rooms", total: "", withFindings: "", withoutFindings: "" },
-      { key: "fireExtinguishers", label: "Fire Extinguishers", total: "", withFindings: "", withoutFindings: "" },
-      { key: "washrooms", label: "Washrooms", total: "", withFindings: "", withoutFindings: "" },
-      { key: "corridors", label: "Corridors", total: "", withFindings: "", withoutFindings: "" },
-      { key: "emergencyExits", label: "Emergency Exits", total: "", withFindings: "", withoutFindings: "" },
-      { key: "publicAreas", label: "Public Areas", total: "", withFindings: "", withoutFindings: "" },
-      { key: "outsideSurroundingArea", label: "Outside Surrounding Area", total: "", withFindings: "", withoutFindings: "" },
-      { key: "warehousesStorage", label: "Warehouses/Storage", total: "", withFindings: "", withoutFindings: "" },
-    ],
-  };
-}
+
   const labelStyle = {
     fontWeight: "bold",
     color: "#2563eb",
@@ -251,227 +229,14 @@ const LOCATIONS = {
     "South of Riyadh Hemodialysis Center"
   ],
 };
-const excelUrl = 'https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s';
-
-const flowUrl = 'https://prod-126.westus.logic.azure.com:443/workflows/6a07d00a56254857935813e0ccf388f6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JS5gzSv5TFeO7yiUYZcvRNaek7RQKeXjkIz8JDKuJw8';
-
-async function sendToExcel(entries) {
-  const allDates = entries
-    .map(e => e.date)
-    .filter(Boolean)
-    .map(d => new Date(d))
-    .sort((a, b) => a - b);
-
-  if (allDates.length === 0) return;
-
-  // 2️⃣ دالة تنسيق التاريخ مثل m/d/yyyy
-  const fmt = d => `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-
-  // أول وآخر تاريخ
-  const first = allDates[0];
-  const last  = allDates[allDates.length - 1];
-
-  // 3️⃣ أنشئ نطاق التاريخ: إذا واحد فقط، طبع التاريخ، وإلا "first to last"
-  const dateRange =
-    first.getTime() === last.getTime()
-      ? fmt(first)
-      : `${fmt(first)} to ${fmt(last)}`;
-
-  // 4️⃣ أرسل كل entry للـ Power Automate بدون الصور
-  for (const e of entries) {
-    const payload = {
-      Badge: e.badge,
-      Date: dateRange,                                  // التاريخ المجمّع
-      "Main Location": e.mainLocation,
-      // إذا جدول الـ Excel لديك يكتب Inpection (بدون s)،
-      // غيّر المفتاح بالضبط لهناك:
-      "Assigned Inspection Location": e.sideLocation,   
-      "Exact Location": e.exactLocation,
-      Findings: e.findings,
-      Classification: e.classification,
-      Status: e.status,
-      "Risk / Priority": e.risk
-    };
-
-    const res = await fetch(flowUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      throw new Error(`Excel send failed: ${res.status}`);
-    }
-  }
-}
 
 
-function SearchReportPopup({ onClose }) {
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  // ⬅️ هنا ضيف متغيرات الصفحات
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
 
-  const totalPages = Math.ceil(results.length / itemsPerPage);
-  const paginatedResults = results.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-
-  // ⬅️ عشان يرجع لأول صفحة إذا تغيرت النتائج
-  useEffect(() => {
-    setPage(1);
-  }, [results]);
-  
-
-  const handleSearch = async () => {
-    setLoading(true);
-    try {
-      // عدّل هذا حسب اسم حاويتك أو API لديك
-      const res = await fetch(`/api/searchReports?query=${encodeURIComponent(search)}`);
-      if (!res.ok) throw new Error("Failed to search.");
-      const data = await res.json();
-      setResults(data.reports); // [{name, url}]
-    } catch (err) {
-      alert("Error searching reports.");
-      setResults([]);
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div style={{
-      position: "fixed", zIndex: 200, left: 0, top: 0, width: "100vw", height: "100vh",
-      background: "rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center"
-    }}>
-      <div style={{
-        background: "#fff", borderRadius: 15, padding: 24, minWidth: 320, maxWidth: 400, boxShadow: "0 6px 24px #2563eb33"
-      }}>
-        <h3 style={{ color: "#2563eb", marginBottom: 12 }}>Search Reports</h3>
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleSearch()}
-          placeholder="Type report name or part of it"
-          style={{
-            width: "100%", fontSize: 16, padding: "10px", marginBottom: 10, borderRadius: 7, border: "1.3px solid #2563eb"
-          }}
-        />
-        <button
-          onClick={handleSearch}
-          style={{ ...mainBtnStyle, fontSize: 14, padding: "8px 16px", marginBottom: 10, width: "100%" }}>
-          {loading ? "Searching..." : "Search"}
-        </button>
-        <button
-          onClick={onClose}
-          style={{ ...mainBtnStyle, background: "#e11d48", fontSize: 14, padding: "8px 16px", marginBottom: 8, width: "100%" }}>
-          Close
-        </button>
-        <div>
-        <div>
-  <div>
-  {results.length === 0 && !loading ? (
-    <div style={{ color: "#888", textAlign: "center" }}>No results</div>
-  ) : null}
-
-  {paginatedResults.map((r, i) => (
-    <div
-      key={i}
-      style={{
-        margin: "10px 0",
-        padding: "10px",
-        border: "1px solid #e5e7eb",
-        borderRadius: 7,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between"
-      }}
-    >
-      <span
-        style={{
-          wordBreak: "break-all",
-          color: "#111",
-          fontWeight: "bold",
-          fontSize: 16
-        }}
-      >
-        {r.name}
-      </span>
-      <a
-        href={r.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          background: "#2563eb",
-          color: "#fff",
-          borderRadius: 7,
-          padding: "4px 12px",
-          fontSize: 13,
-          marginLeft: 10,
-          textDecoration: "none"
-        }}
-      >
-        Download
-      </a>
-   
-    </div>
-  ))}
-
-  {/* أزرار الصفحات */}
-  <div style={{ display: "flex", justifyContent: "center", gap: 12, margin: "12px 0" }}>
-    <button
-      style={{
-        background: "#f1f5f9",
-        color: "#2563eb",
-        border: "1.2px solid #2563eb",
-        borderRadius: 7,
-        padding: "4px 15px",
-        fontSize: 14,
-        fontWeight: 600,
-        cursor: page > 1 ? "pointer" : "not-allowed",
-        opacity: page > 1 ? 1 : 0.55,
-      }}
-      onClick={() => setPage((p) => Math.max(1, p - 1))}
-      disabled={page === 1}
-    >
-      Previous
-    </button>
-    <span style={{ color: "#2563eb", fontWeight: 700, fontSize: 15, alignSelf: "center" }}>
-      {page} / {totalPages || 1}
-    </span>
-    <button
-      style={{
-        background: "#f1f5f9",
-        color: "#2563eb",
-        border: "1.2px solid #2563eb",
-        borderRadius: 7,
-        padding: "4px 15px",
-        fontSize: 14,
-        fontWeight: 600,
-        cursor: page < totalPages ? "pointer" : "not-allowed",
-        opacity: page < totalPages ? 1 : 0.55,
-      }}
-      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-      disabled={page === totalPages}
-    >
-      Next
-    </button>
-  </div>
-</div>
-
-  
-</div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
 export default function GSIReport() {
   const [entries, setEntries] = useState([
     {
       badge: "",
-      classification: "",
       location: "",
       mainLocation: "",
       sideLocation: "",
@@ -587,7 +352,7 @@ const saveForLater = async () => {
         exactLocation: last.exactLocation || "",
         findings: "",
         status: "",
-        classification: "",
+     
         risk: "",
         images: []
       }
@@ -784,7 +549,6 @@ const generateWordWithImages = async () => {
   const dateString = new Date().toISOString().slice(0, 10);
   const filename = `PhotosReport ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
-  try { await uploadReportBlob(blob, filename, badge); } catch {}
   saveAs(blob, filename);
   localStorage.removeItem("gsi_entries");
   localStorage.removeItem("gsi_badge");
@@ -826,14 +590,7 @@ function formatDateTime(val) {
 
 
 const generateWordPhotoNumbers = async () => {
-  // 1️⃣ أولاً: أرسل البيانات إلى الإكسل
-  try {
-    await sendToExcel(entries);
-  } catch (err) {
-    console.error('Excel send error:', err);
-    alert('تعذّر حفظ البيانات في الإكسل.');
-    return;
-  }
+  
 
   // 2️⃣ تقسيم الملاحظات
   const unresolved = entries.filter(e => e.status !== "Rectified");
@@ -1160,7 +917,7 @@ const generateWordPhotoNumbers = async () => {
 style={{
   minHeight: "100vh",
   width: "100%",
-   backgroundImage: "linear-gradient(120deg, #2563eb 0%, #280055ff 100%)",
+   backgroundImage: "linear-gradient(120deg, #2563eb 0%, #280055ff 80%)",
   backgroundSize: "cover",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "center",
@@ -1206,7 +963,7 @@ style={{
   {userName && (
     <div
 style={{
-  color: "#86d89aff", 
+  color: "#0008", 
   textShadow: "0 2px 16px #070255ff, 0 1px 0 #0008", // ظل أزرق غامق + أسود خفيف يوضح الحروف
   fontWeight: 900,
   fontSize: 16,
@@ -1234,52 +991,6 @@ style={{
   justifyContent: "center",
   marginTop: 16,
 }}>
-  {showSearchPopup && (
-  <SearchReportPopup onClose={() => setShowSearchPopup(false)} />
-)}
-
-<button style={searchreportstyle} onClick={() => setShowSearchPopup(true)}>
-  Search Reports
-</button>
-{showSearchPopup && (
-  <SearchReportPopup onClose={() => setShowSearchPopup(false)} />
-  
-)}
-  {/* Excel button */}
-  <button
-    style={{
-   background: "linear-gradient(90deg, #000000ff 0%, #60a5fa 100%)",
-  color: "#fff",
-  fontWeight: 600,
-  border: "none",
-  borderRadius: 10,
-  fontSize: 12,
-  padding: "6px 6px",
-  boxShadow: "0 2px 8px #6366f140",
-  cursor: "pointer",
-  transition: "background 0.2s",
-    }}
-    onClick={() =>
-      window.open(
-        "https://ptsassoc-my.sharepoint.com/:x:/g/personal/v5jl_ptsassoc_onmicrosoft_com/EQazCzrL6GhLhhjA8rLhaC4BbPeBZUEeflofyGUdQTHVdA?e=XWRy0s",
-        "_blank"
-      )
-    }
-  >
-     Excel Sheet
-  </button>
-
-  {/* زر Last Reports */}
-  <button
-  style={lastReportsBtnStyle}
-  onClick={() => setShowLastReportsPopup(true)}
->
-  Last Reports
-</button>
-
-{showLastReportsPopup && (
-  <LastReportsPopup onClose={() => setShowLastReportsPopup(false)} />
-)}
 
 
 </div>
@@ -1530,7 +1241,7 @@ style={{
         >
           <option value="">Risk/Priority</option>
           <option value="High">High</option>
-          <option value="Medium">Medium</option>
+          <option value="Moderate">Moderate</option>
           <option value="Low">Low</option>
         </select>
       </div>
@@ -1585,7 +1296,7 @@ style={{
             marginBottom: 8,
             fontSize: isMobile ? 16 : 14,
             fontWeight: 600,
-            textAlign: isMobile ? "left" : "center"
+           
           }}>Attach Photos (2 Max)</label>
           <input
             id={`image-upload-${idx}`}
@@ -1602,59 +1313,10 @@ style={{
             }}
           />
         </div>
-        
-        <div style={{ flex: isMobile ? "none" : "2" }}>
-          <label style={{
-            ...labelStyle,
-            display: 'block',
-            marginBottom: 8,
-            fontSize: isMobile ? 16 : 14,
-            fontWeight: 600
-          }}>Classification</label>
-          <select
-            id={`classification-${idx}`}
-            value={entry.classification}
-            onChange={(e) => updateEntry(idx, "classification", e.target.value)}
-            style={{
-              ...inputStyle,
-              width: "100%",
-              fontSize: isMobile ? 16 : 14,
-              padding: isMobile ? "12px" : "8px 12px",
-              boxSizing: "border-box"
-            }}
-          >
-            <option value="">Classification</option>
-            <option value="Building Structures and Appearance">Building Structures and Appearance</option>
-            <option value="Facility Maintenance (e.g., Electrical plumbing drainage issue)">
-              Facility Maintenance (e.g., Electrical plumbing drainage issue)
-            </option>
-            <option value="Safety & Security measures in internal and external areas">
-              Safety & Security measures in internal and external areas
-            </option>
-            <option value="Support Services (e.g., Environmental /Housekeeping)">
-              Support Services (e.g., Environmental /Housekeeping)
-            </option>
-            <option value="Availability, Attitude and attentiveness of service providers">
-              Availability, Attitude and attentiveness of service providers
-            </option>
-            <option value="Concerns raised by staff at any inspected location">
-              Concerns raised by staff at any inspected location
-            </option>
-            <option value="Unsolved patients Issues during the time of inspection">
-              Unsolved patients Issues during the time of inspection
-            </option>
-            <option value="Policy Compliance (general policies such as non-smoking and dress code-wearing badges)">
-              Policy Compliance (general policies such as non-smoking and dress code-wearing badges)
-            </option>
-            <option value="Space utilization">Space utilization</option>
-            <option value="property condition">property condition</option>
-            <option value="any other Operational deficiencies/ Obstacles">
-              any other Operational deficiencies/ Obstacles
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
+  
+</div>
+</div>
+
 
     {/* Row 5: Badge Number and Image Previews */}
     <div style={{ 
@@ -1663,33 +1325,7 @@ style={{
       gap: 16, 
       alignItems: isMobile ? "stretch" : "flex-start" 
     }}>
-      <div style={{ flex: isMobile ? "none" : "0 0 200px" }}>
-        <label htmlFor={`badge-${idx}`} style={{
-          ...labelStyle,
-          display: 'block',
-          marginBottom: 8,
-          fontSize: isMobile ? 16 : 14,
-          fontWeight: 600
-        }}>
-          Badge Number:
-        </label>
-        <input
-          id={`badge-${idx}`}
-          type="number"
-          min="1"
-          placeholder="Badge number"
-          value={entry.badge}
-          onChange={(e) => updateEntry(idx, "badge", e.target.value)}
-          style={{
-            ...inputStyle,
-            fontWeight: "bold",
-            width: isMobile ? "100%" : "120px",
-            fontSize: isMobile ? 16 : 14,
-            padding: isMobile ? "12px" : "8px 12px",
-            boxSizing: "border-box"
-          }}
-        />
-      </div>
+  
 
 
       {/* Image Previews */}
@@ -1767,7 +1403,6 @@ style={{
           <button style={mainBtnStyle} onClick={addEntry}>Add Observation</button>
           <button style={mainBtnStyle} onClick={generateWordPhotoNumbers}>Word (E-CTS)</button>
           <button style={mainBtnStyle} onClick={generateWordWithImages}>Word (Photos)</button>
-          <button style={mainBtnStyle} onClick={() => setShowStats(true)}>Show Statistics</button>
           <button style={mainBtnStyle} onClick={saveForLater}>Save & Pause Inspection (Delete Photos to save you can add them later)</button>
         </div>
                 <div
@@ -1783,260 +1418,9 @@ style={{
 >
   Developed & Designed by Khalid Al Mutairi ©  
 </div>
-        {/* Popup الإحصائيات */}
-        {showStats && (
-          <StatisticsPopup onClose={() => setShowStats(false)} />
-        )}
+     
       </div>
 
-
-    </div>
-  );
-}
-
-// ========= COMPONENT: StatisticsPopup =========
-function StatisticsPopup({ onClose }) {
-  // اسم المكان الحالي والإحصائيات
-  const [areas, setAreas] = useState([
-    makeEmptyArea(""),
-  ]);
-  const [currentName, setCurrentName] = useState("");
-
-  // إضافة مكان جديد
-  const addArea = () => {
-    if (!currentName.trim()) return;
-    setAreas([...areas, makeEmptyArea(currentName.trim())]);
-    setCurrentName("");
-  };
-
-  // تحديث القيم داخل الجدول
-  const updateStat = (areaIdx, typeKey, field, value) => {
-    setAreas(areas.map((area, idx) =>
-      idx !== areaIdx ? area : {
-        ...area,
-        stats: area.stats.map(stat =>
-          stat.key !== typeKey ? stat : { ...stat, [field]: value }
-        ),
-      }
-    ));
-  };
-const generateStatsWord = async () => {
-  const tableCellStyle = {
-    margins: { top: 100, bottom: 100, left: 100, right: 100 },
-    borders: {
-      top: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
-      bottom: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
-      left: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
-      right: { style: BorderStyle.SINGLE, size: 2, color: "2563eb" },
-    },
-  };
-
-  const doc = new Document({
-    sections: [
-      {
-        children: [
-          new Paragraph({
-            children: [
-              new TextRun({ text: "GSI Areas Audit Statistics", bold: true, size: 32 }),
-            ],
-            alignment: "center",
-            spacing: { after: 300 }
-          }),
-          ...areas.filter(a => a.name.trim()).map((area) => [
-            new Paragraph({
-              children: [new TextRun({ text: `Area Name: ${area.name}`, bold: true, size: 26 })],
-              spacing: { after: 150 },
-            }),
-            new Table({
-              rows: [
-                // Header row
-                new TableRow({
-                  children: [
-                    new TableCell({
-                      children: [new Paragraph({ text: "Type", bold: true })],
-                      shading: { fill: "2563eb" },
-                      ...tableCellStyle,
-                    }),
-                    new TableCell({
-                      children: [new Paragraph({ text: "Total", bold: true })],
-                      shading: { fill: "2563eb" },
-                      ...tableCellStyle,
-                    }),
-                    new TableCell({
-                      children: [new Paragraph({ text: "With Findings", bold: true })],
-                      shading: { fill: "2563eb" },
-                      ...tableCellStyle,
-                    }),
-                    new TableCell({
-                      children: [new Paragraph({ text: "No Findings", bold: true })],
-                      shading: { fill: "2563eb" },
-                      ...tableCellStyle,
-                    }),
-                  ],
-                  tableHeader: true,
-                }),
-                // Data rows
-                ...area.stats.map(stat =>
-                  new TableRow({
-                    children: [
-                      new TableCell({ children: [new Paragraph(stat.label)], ...tableCellStyle }),
-                      new TableCell({ children: [new Paragraph(stat.total.toString())], ...tableCellStyle }),
-                      new TableCell({ children: [new Paragraph(stat.withFindings.toString())], ...tableCellStyle }),
-                      new TableCell({ children: [new Paragraph(stat.withoutFindings.toString())], ...tableCellStyle }),
-                    ],
-                  })
-                ),
-              ],
-              width: { size: 100, type: "pct" },
-            }),
-            new Paragraph(" "),
-          ]).flat(),
-        ],
-      },
-    ],
-  });
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, "GSI_Areas_Statistics.docx");
-};
-
-
-  return (
-    <div style={statsPopupStyle}>
-      <div style={statsContentStyle}>
-        <h2 style={{ color: "#2563eb", textAlign: "center", marginBottom: 8 }}>
-          Areas Statistics
-        </h2>
-
-        {/* إضافة منطقة جديدة */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
-          <input
-            type="text"
-            placeholder="Enter area/location name"
-            value={currentName}
-            onChange={(e) => setCurrentName(e.target.value)}
-            style={{
-              padding: 6,
-              fontSize: 15,
-              borderRadius: 8,
-              border: "1.5px solid #2563eb",
-              minWidth: 170,
-              background: "#fff",
-              color: "#2563eb",
-              fontWeight: "bold",
-              outline: "none",
-            }}
-          />
-          <button
-            onClick={addArea}
-            style={{
-              background: "#2563eb",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 14,
-              padding: "8px 14px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Add Area
-          </button>
-        </div>
-
-        {/* قائمة الأماكن والإحصائيات */}
-        <div style={{ maxHeight: 400, overflow: "auto", marginBottom: 20 }}>
-          {areas.map((area, areaIdx) =>
-            area.name.trim() ? (
-              <div
-                key={areaIdx}
-                style={{
-                  background: "#f3f7ff",
-                  borderRadius: 11,
-                  boxShadow: "0 2px 12px #60a5fa14",
-                  padding: 12,
-                  marginBottom: 18,
-                  borderLeft: "6px solid #2563eb",
-                }}
-              >
-                <h3 style={{ margin: 0, color: "#2563eb", fontSize: 17 }}>
-                  {area.name}
-                </h3>
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 9 }}>
-                  <thead>
-                    <tr style={{ background: "#dbeafe", color: "#1e293b" }}>
-                      <th style={cellStyle}>Type</th>
-                      <th style={cellStyle}>Total</th>
-                      <th style={cellStyle}>With Findings</th>
-                      <th style={cellStyle}>No Findings</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {area.stats.map((stat) => (
-                      <tr key={stat.key}>
-                        <td style={{ ...cellStyle, color: "#2563eb", fontWeight: "bold" }}>
-                          {stat.label}
-                        </td>
-                        <td style={cellStyle}>
-                          <input
-                            type="number"
-                            min={0}
-                            value={stat.total}
-                            onChange={(e) =>
-                              updateStat(areaIdx, stat.key, "total", e.target.value)
-                            }
-                            style={inputStyle}
-                          />
-                        </td>
-                        <td style={cellStyle}>
-                          <input
-                            type="number"
-                            min={0}
-                            value={stat.withFindings}
-                            onChange={(e) =>
-                              updateStat(areaIdx, stat.key, "withFindings", e.target.value)
-                            }
-                            style={inputStyle}
-                          />
-                        </td>
-                        <td style={cellStyle}>
-                          <input
-                            type="number"
-                            min={0}
-                            value={stat.withoutFindings}
-                            onChange={(e) =>
-                              updateStat(areaIdx, stat.key, "withoutFindings", e.target.value)
-                            }
-                            style={inputStyle}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : null
-          )}
-        </div>
-
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 20,
-            display: "flex",
-            gap: 12,
-            justifyContent: "center",
-          }}
-        >
-          <button onClick={generateStatsWord} style={mainBtnStyle}>
-            Download Statistics Word
-          </button>
-          <button onClick={onClose} style={{ ...mainBtnStyle, background: "#e11d48" }}>
-            Close
-          </button>
-        </div>
-
-      
-      </div>
 
     </div>
   );
