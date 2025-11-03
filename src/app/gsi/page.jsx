@@ -414,7 +414,7 @@ const generateWordWithImages = async () => {
   const unresolvedSeq = unresolved.map((e, i) => ({ ...e, _seq: i + 1 }));
   const resolvedSeq   = resolved.map((e, i) => ({ ...e, _seq: unresolvedSeq.length + i + 1 }));
 
-  // 4) مُنشئ جدول يستخدم الرقم الثابت _seq ويضبط المحاذاة للوسط
+  // 4) مُنشئ الجدول
   const buildTable = async (data) => {
     const header = new TableRow({
       height: { value: 500, rule: "atLeast" },
@@ -473,7 +473,15 @@ const generateWordWithImages = async () => {
             );
           }
         } else {
-          imageParagraphs.push(new Paragraph({ text: "" }));
+          // ✅ لو ما فيه صور يكتب N/A
+          imageParagraphs.push(
+            new Paragraph({
+              alignment: "center",
+              children: [
+                new TextRun({ text: "N/A", bold: true, font: "Times New Roman", size: 20 })
+              ]
+            })
+          );
         }
 
         return new TableRow({
@@ -521,15 +529,12 @@ const generateWordWithImages = async () => {
       children: [
         locationPara,
         datePara,
-
         new Paragraph({
           children: [ new TextRun({ text: "Outstanding Observations:", font: "Times New Roman", bold: true, size: 20 }) ],
           spacing: { after: 200 }
         }),
         new Table({ rows: unresolvedRows, width: { size: 100, type: "pct" } }),
         new Paragraph(""),
-
-
 
         new Paragraph({
           children: [ new TextRun({ text: "Rectified Observations:", font: "Times New Roman", bold: true, size: 20 }) ],
@@ -588,9 +593,7 @@ function formatDateTime(val) {
 
 
 
-
 const generateWordPhotoNumbers = async () => {
-  
 
   // 2️⃣ تقسيم الملاحظات
   const unresolved = entries.filter(e => e.status !== "Rectified");
@@ -616,12 +619,16 @@ const generateWordPhotoNumbers = async () => {
 
     const rows = data.map(e => {
       let photoText = "";
-      if (e.images?.length) {
-        const start = photoCounter;
-        const end = photoCounter + e.images.length - 1;
-        photoText = e.images.length === 1 ? `Photo#${start}` : `Photos#${start}-${end}`;
-        photoCounter += e.images.length;
+
+      // ✅ هنا التعديل الرئيسي:
+      if (e.images && e.images.length > 0) {
+        // فيه صور → نكتب Attached فقط
+        photoText = "Attached";
+      } else {
+        // ما فيه صور → نكتب N/A
+        photoText = "N/A";
       }
+
       return new TableRow({
         children: [
           String(rowNumber++),
@@ -632,7 +639,12 @@ const generateWordPhotoNumbers = async () => {
           e.status || "—",
           e.risk || "—"
         ].map(val => new TableCell({
-          children: [ new Paragraph({ children: [ new TextRun({ text: String(val), font: "Times New Roman", size: 18 }) ], alignment: "center" }) ]
+          children: [
+            new Paragraph({
+              alignment: "center",
+              children: [ new TextRun({ text: String(val), font: "Times New Roman", size: 18 }) ]
+            })
+          ]
         }))
       });
     });
@@ -698,12 +710,6 @@ const generateWordPhotoNumbers = async () => {
 
   const filename = `Report ${assignedLocation} ${exactLocation} ${badge} ${dateString}.docx`;
 
-  try {
-    const badge = entries[0]?.badge;
-    await uploadReportBlob(blob, filename, badge);
-  } catch (err) {
-    console.error("Upload report failed", err);
-  }
 
   saveAs(blob, filename);
 
